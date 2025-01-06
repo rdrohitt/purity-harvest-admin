@@ -102,7 +102,7 @@ const Enquiries: React.FC = () => {
             render: (subarea_id: string) => subareas[subarea_id] || 'Unknown',
         },
         {
-            title: 'Creation Date',
+            title: 'Enquiry Date',
             dataIndex: 'creation_date',
             key: 'creation_date',
             render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
