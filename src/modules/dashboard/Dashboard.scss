@@ -1,0 +1,93 @@
+.dashboard {
+
+    .ant-card-body {
+        padding: 0px;
+    }
+
+    .ant-card-head {
+        background: #445ebe;
+        font-weight: 800;
+        font-size: 18px;
+        color: white;
+        min-height: 40px;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: center;
+        height: 70px;
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: box-shadow 0.3s ease;
+        padding-left: 20px;
+
+        &:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-content {
+            display: flex;
+            align-items: center;
+
+            .stat-icon {
+                font-size: 24px;
+                margin-right: 10px;
+            }
+
+            .stat-details {
+                text-align: left;
+
+                .stat-title {
+                    font-size: 12px;
+                    color: #888888;
+                    margin: 0;
+                }
+
+                .stat-count {
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #333333;
+                }
+            }
+        }
+    }
+
+    /* Specific icon color styles */
+    .total-customers-icon {
+        color: #1890ff;
+        /* Blue color */
+    }
+
+    .active-subscriptions-icon {
+        color: #52c41a;
+        /* Green color */
+    }
+
+    .inactive-subscriptions-icon {
+        color: #fa8c16;
+        /* Orange color */
+    }
+
+    .trial-given-icon {
+        color: #f5222d;
+        /* Red color */
+    }
+
+    .without-subscription-icon {
+        color: #722ed1;
+        /* Purple color */
+    }
+
+    .failed-delivery-icon {
+        color: red;
+    }
+
+    .cart-icon {
+        color: #e4ad06;
+    }
+
+}

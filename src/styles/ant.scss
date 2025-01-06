@@ -1,0 +1,167 @@
+@import './theme.scss';
+
+.ant-menu-root {
+    margin-top: 10px;
+}
+
+.ant-badge {
+    margin-top: 24px;
+}
+
+.ant-table td {
+    padding: 5px 16px !important;
+}
+
+.ant-table-tbody > tr > td {
+        border-bottom: 5px solid #f0f0f0 !important;
+}
+
+.ant-modal-title {
+    font-size: 20px !important;
+    color: #095c4f !important;
+    margin-bottom: 15px !important;
+}
+
+.ant-collapse {
+    border-bottom: 1px solid #d9d9d9 !important;
+}
+
+.ant-collapse-item:last-child {
+    border: none !important;
+}
+
+.ant-modal-header {
+    text-align: center;
+}
+
+.ant-menu {
+    padding-bottom: 60px;
+}
+
+.ant-menu-light {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif !important;
+}
+
+.ant-layout {
+    height: 100vh;
+}
+
+.ant-avatar {
+    position: absolute;
+    right: 0;
+    margin-top: 10px;
+    margin-right: 15px;
+    line-height: 1.5;
+
+}
+
+.ant-input-group-addon .ant-select {
+    width: 100px;
+}
+
+.ant-modal-body>.row {
+    background: #f8f7fb !important;
+    padding: 15px 0px;
+
+}
+
+.ant-modal-body>.step-bg {
+    background: #f8f7fb !important;
+    padding: 15px;
+
+}
+
+.ant-steps .ant-steps-item-icon {
+    height: 32px !important;
+    width: 32px !important;
+}
+
+.ant-steps-item-icon{
+    line-height: 32px !important;
+    background-color: $primary-color !important;
+    border-color: $primary-color !important;
+}
+
+.ant-steps-icon{
+    color: white !important;
+}
+
+.ant-tabs-nav{
+    margin: 0px !important;
+}
+
+.ant-timeline .ant-timeline-item-head-blue{
+    color: $primary-color !important; 
+    border-color: $primary-color !important;
+}
+
+.anticon-plus{
+    svg {
+        vertical-align: baseline !important;
+    }
+}
+
+.ant-table-thead {
+    tr {
+      th {
+        padding: 10px 8px 8px 8px !important;
+      }
+    }
+  }
+  
+  .ant-table-wrapper {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    --ant-table-tbody-tr-height: 32px;
+    /* Adjust row height */
+    --ant-table-tbody-td-padding: 8px;
+    /* Adjust cell padding */
+  }
+  
+  .ant-table-cell {
+    padding-top: 2px !important;
+    /* Adjust top padding of cells */
+    padding-bottom: 2px !important;
+    /* Adjust bottom padding of cells */
+  }
+  
+  .table-bordered> :not(caption)>*>* {
+    border-width: 1px 1px !important;
+  }
+  
+  .ant-table td {
+    padding: 2px 8px !important;
+  }
+
+  .ant-table-measure-row {
+    display: none
+  }
+
+  .nested-table {
+    .ant-table {
+        margin-bottom: 20px;
+        margin-block: 0px !important;
+        margin-inline: 0px !important;
+      //  background-color: antiquewhite;
+    }
+
+    .ant-btn-primary {
+        background-color: #1890ff;
+        border-color: #1890ff;
+    }
+
+    .ant-table-wrapper {
+        box-shadow: none !important;
+    }
+
+    .ant-table-tbody>tr>td {
+        border-bottom: 1px solid #f0f0f0 !important;
+        font-size: 12px;
+    }
+
+    .ant-table-thead tr th {
+        padding: 5px 16px 3px 8px !important;
+        font-size: 12px;
+    }
+}

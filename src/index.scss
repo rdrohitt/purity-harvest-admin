@@ -1,0 +1,189 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+main {
+  padding-top: 60px;
+}
+
+.profile {
+  margin: 20px 0;
+
+  .profile-tabs {
+    background-color: white;
+
+    .ant-tabs-nav {
+      width: 100% !important;
+    }
+  
+    .ant-tabs-tab {
+      margin: 0px !important;
+    }  
+  }
+
+  .ant-tabs-content-holder {
+    margin-top: 15px;
+  }
+
+  .profile-sidebar {
+    padding: 20px 0 0px 0;
+    background: #d9d9d9;
+  }
+
+  .profile-userpic  .ant-avatar{
+    position: relative;
+    display: block;
+    margin: 0 auto;
+    width: 100px;
+    height: 100px;
+    font-size: 80px;
+  }
+
+  .profile-usertitle {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .profile-usertitle-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 7px;
+  }
+
+  .edit {
+    text-transform: uppercase;
+    color: #5b9bd1;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  /* Profile Content */
+  .profile-content {
+   // padding: 5px 20px;
+    background: #fff;
+    min-height: 460px;
+  }
+
+  .portlet {
+    margin-top: 0;
+    margin-bottom: 25px;
+    padding: 0; 
+  }
+
+  .portlet.light {
+    background-color: #fff;
+  }
+
+  .portlet.light.bordered {
+    border-top: 1px solid #e7ecf1 !important;
+  }
+
+  .list-separated {
+    margin-top: 10px;
+  }
+
+  .profile-stat {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f4f7;
+  }
+
+  .profile-stat-title {
+    color: #ce0f0f;
+    font-size: 25px;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  .uppercase {
+    text-transform: uppercase !important;
+  }
+
+  .profile-stat-text {
+    color: #5b9bd1;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .profile-desc-title {
+    color: #7f90a4;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .profile-desc-link i {
+    width: 22px;
+    font-size: 19px;
+    color: #abb6c4;
+    margin-right: 5px;
+  }
+}
+
+.left-20 {
+  margin-left: 20px;
+}
+
+.trash-icon {
+   color: rgb(217, 12, 12);
+   font-size: 16px;
+   cursor: pointer;
+}
+
+.edit-icon {
+  color: blue;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.highlight-row {
+  border-left: 5px solid #007bff; /* Accent border on the left side */
+  background-color: #e3ecf6; /* Subtle background color */
+  border-radius: 4px; /* Rounded corners */
+}
+
+.watermarked-container {
+  position: relative; /* Allows absolute positioning of the watermark */
+}
+
+.watermarked-row {
+  position: relative;
+  background-color: #f9f9f9; /* Optional: Light background for better visibility */
+}
+
+.cell-container {
+  position: relative;
+}
+
+.watermarked-row .watermark {
+  position: absolute;
+  top: 50%;
+  left: 550px; /* Adjust based on your requirements */
+  transform: translate(-50%, -50%) rotate(-15deg); /* Added tilt effect */
+  font-size: 16px;
+  color: rgba(255, 0, 0, 0.2); 
+  pointer-events: none; /* Ensures no interaction */
+  z-index: 10; /* Keeps the watermark above other elements */
+}
+
+.total-row {
+  background-color: #050547; /* Light blue background */
+  font-weight: bold; /* Makes the text bold */
+  color: white;
+}
+.total-row {
+  .ant-table-cell-row-hover{
+  background-color: #050547 !important; /* Light blue background */
+  font-weight: bold; /* Makes the text bold */
+  color: white;
+ }
+}
+
+.total-row .no-bg-color {
+  background-color: white !important; /* Exclude background color for the first cell */
+}

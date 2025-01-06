@@ -1,0 +1,49 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #6d83f2 0%, #68e0cf 100%);
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  .login-card {
+    width: 400px;
+    padding: 10px 40px 40px 40px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .login-card .logo {
+    width: 150px;
+  }
+  
+  .login-card .ant-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .login-card .ant-input,
+  .login-card .ant-input-password {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+  }
+  
+  .login-card .ant-checkbox-wrapper {
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  .login-card .ant-btn {
+    background-color: #445ebe;
+    padding: 12px 0;
+    font-size: 16px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .ant-form-item-explain-error {
+    text-align: left;
+  }

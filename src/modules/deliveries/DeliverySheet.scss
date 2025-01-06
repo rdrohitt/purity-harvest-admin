@@ -1,0 +1,108 @@
+.page-heading {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.filter-container {
+    margin-bottom: 10px;
+}
+
+.ant-form-item-label>label {
+    font-weight: bold;
+}
+
+.stats-row {
+    margin-top: 10px;
+}
+
+.stat-box {
+    text-align: center;
+    background-color: #f1f1f1;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.stat-box p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.stat-box strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.driver-stat-box {
+    text-align: center;
+    border: 1px solid #0e2166;
+    padding: 10px;
+    border-radius: 8px;
+
+    p {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #333;
+    }
+}
+
+/* Colors for different statistics */
+.blue {
+    color: blue;
+}
+
+.green {
+    color: green;
+}
+
+.red {
+    color: red;
+}
+
+.orange {
+    color: orange;
+}
+
+.center {
+    text-align: center;
+}
+
+em {
+    font-size: 14px;
+}
+
+.daily-bill-summary {
+    padding: 3px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.bill-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bill-label {
+    color: #333;
+    font-size: 12px;
+}
+
+.bill-value {
+    color: #555;
+    font-size: 12px;
+}
+
+.bill-row.total {
+    border-top: 1px solid #d0d0d0;
+    font-size: 14px;
+    color: #000;
+    font-weight: 600;
+}

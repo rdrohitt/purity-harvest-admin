@@ -1,0 +1,240 @@
+@import './theme.scss';
+@import './ant.scss';
+@import './buttons.scss';
+
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: $sidebar-bg-color;
+  color: $sidebar-text-color;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s ease-in-out;
+  overflow-y: auto;
+  z-index: 99999;
+
+  &.collapsed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    height: 100vh; // Ensure it spans the entire height on mobile
+    overflow-y: auto; // Allow scrolling on mobile
+    overflow-x: hidden; // Hide any horizontal scroll
+
+    &.open {
+      width: 250px; // Sidebar width for mobile when open
+    }
+  }
+
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: gainsboro;
+    border-radius: 10px;
+  }
+
+  .sidebar-header {
+    text-align: center;
+    margin-bottom: 2rem;
+
+    .logo-container {
+      width: 120px;
+      height: 120px;
+      border: 5px dotted $sidebar-active-bg-color;  // The color of the circle
+      border-radius: 50%;  // Makes the container circular
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;  // Center the logo container
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;  // Makes the image itself circular
+    }
+  }
+
+  .nav-link {
+    color: $sidebar-text-color;
+    padding: $sidebar-item-padding;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+
+    &:hover {
+      background-color: $sidebar-active-bg-color;
+      color: $sidebar-active-text-color;
+      border-radius: 0.80rem;
+    }
+
+    i {
+      margin-right: 10px;
+    }
+  }
+
+    .nav-link.active {
+    background-color: $sidebar-active-bg-color;
+    color: $sidebar-active-text-color;
+    font-weight: $font-weight-bold;
+    border-radius: 0.80rem;
+  }
+
+  // Active parent styling (Users when All Users or Add User is selected)
+  .active-parent {
+    background-color: $sidebar-active-bg-color;
+    color: $sidebar-active-text-color;
+    font-weight: $font-weight-bold;
+    border-radius: 0.80rem;
+  }
+
+  // Submenu Styling
+  .submenu {
+  //  background-color: $submenu-bg-color;
+    padding-left: 20px;  // Indentation for submenu items to separate from parent
+    transition: all 0.3s ease-in-out;
+    list-style: none;
+
+    .nav-link {
+      font-size: 0.9rem;
+      color: $sidebar-text-color;
+      padding: $submenu-item-padding;
+      padding-left: 35px; // Additional left padding for visual hierarchy
+
+      &:hover {
+        background-color: $submenu-hover-bg-color;
+        color: $submenu-text-color;
+        border-radius: 0.50rem;
+      }
+    }
+
+    .nav-link.active-submenu {
+      background-color: transparent;
+      color: $sidebar-active-bg-color; 
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  .collapse-toggle {
+    cursor: pointer;
+
+    .fa-chevron-right {
+      transform: rotate(90deg);
+      margin-left: auto;
+      transition: transform 0.3s;
+    }
+
+    .fa-chevron-down {
+      transform: rotate(0);
+      margin-left: auto;
+    }
+  }
+}
+
+/* Topbar Styling */
+.topbar {
+  height: 60px;
+  background-color: #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hamburger {
+  font-size: 24px;
+  cursor: pointer;
+  display: none; // Hidden on larger screens
+
+  @media (max-width: 768px) {
+    display: block; // Show hamburger on mobile screens
+    margin-top: 10px;
+    margin-right: 15px;
+  }
+}
+
+.main-content {
+  margin-left: 250px; // Sidebar width
+  transition: margin-left 0.3s ease-in-out;
+
+  &.collapsed {
+    margin-left: 0;
+  }
+
+  @media (max-width: 768px) {
+    margin-left: 0; // On mobile, main content takes full width
+  }
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none; // Hidden by default
+
+  &.show {
+    display: block;
+  }
+
+  @media (min-width: 769px) {
+    display: none !important; // No overlay on desktop
+  }
+}
+
+.page-heading {
+  text-align: left;
+  margin-bottom: 20px;
+  color: #6c757d;
+}
+
+.filter-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+
+  .buttons-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px
+  }
+}
+
+.tab-container {
+  background-color: white;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.link {
+  color: blue;
+}
+
+.left-text {
+  margin-top: 15px;
+}

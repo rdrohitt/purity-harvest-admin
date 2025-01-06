@@ -1,0 +1,46 @@
+.bill-summary {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #e8e8e8;
+
+
+    .bill-summary-heading {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .bill-summary-details {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .bill-summary-details p {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .bill-summary-amounts p {
+        text-align: right;
+    }
+
+    .bill-summary-amounts h2 {
+        text-align: right;
+        margin-top: 10px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .green {
+        color: green;
+    }
+
+    .total {
+        font-weight: 800;
+    }
+
+    .dotted-line {
+        border-bottom: 1px dotted #000;
+        margin: 8px 0;
+    }
+}
