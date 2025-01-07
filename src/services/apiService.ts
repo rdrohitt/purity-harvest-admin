@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import { Modal } from 'antd';
 
 // export const BASE_URL = 'https://test.purityharvest.in/'
- export const BASE_URL = 'https://api.purityharvest.in/'
+export const BASE_URL = 'https://api.purityharvest.in/'
 
 class ApiService {
   private axiosInstance: AxiosInstance;

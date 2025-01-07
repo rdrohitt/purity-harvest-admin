@@ -14,6 +14,7 @@ export interface IOrder {
   status?: 'confirmed' | 'rejected' | 'cancelled' | 'delivered';
   customer_id: number;
   discount?: number;
+  is_cod?: boolean;
   delivery_charges?: number;
   delivery_boy_id?: number | null;
   coupon_id?: number | null;

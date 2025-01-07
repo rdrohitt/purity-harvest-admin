@@ -39,7 +39,7 @@ module.exports = {
       directory: path.resolve(__dirname, 'dist'),
     },
     historyApiFallback: true, 
-    port: 8000,
+    port: 3000,
     hot: true,
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0'

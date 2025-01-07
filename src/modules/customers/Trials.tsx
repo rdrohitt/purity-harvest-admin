@@ -79,6 +79,12 @@ const Trials: React.FC = () => {
             key: 'packaging',
         },
         {
+            title: 'Payment',
+            dataIndex: 'is_cod',
+            key: 'is_cod',
+            render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
+        },
+        {
             title: 'Start Date',
             dataIndex: 'start_date',
             key: 'start_date',
@@ -90,11 +96,6 @@ const Trials: React.FC = () => {
             key: 'end_date',
             render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
         },
-        // {
-        //     title: 'Offer ID',
-        //     dataIndex: 'offer_id',
-        //     key: 'offer_id',
-        // },
         {
             title: 'Status',
             dataIndex: 'status',

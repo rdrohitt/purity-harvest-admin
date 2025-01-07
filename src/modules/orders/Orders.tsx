@@ -209,6 +209,13 @@ const Orders: React.FC = () => {
       render: (_, record) => `₹${calculateTotalAmount(record.items).toFixed(2)}`,
     },
     {
+      title: 'Payment',
+      dataIndex: 'is_cod',
+      key: 'is_cod',
+      width: 120,
+      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
+  },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
