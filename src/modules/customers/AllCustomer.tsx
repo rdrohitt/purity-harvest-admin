@@ -14,6 +14,7 @@ import AddCustomerModal from './modals/AddCustomerModal';
 import { ITrial } from '../../models/Trials';
 import { IOrder } from '../../models/Order';
 import { IProduct } from '../../models/Product';
+import { ITransaction } from '../../models/Transactions';
 
 const { Option } = Select;
 
@@ -33,6 +34,20 @@ const AllCustomer: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [productsData, setProductsData] = useState<IProduct[]>([]);
   const [products, setProducts] = useState<{ [key: string]: { name: string; size: string } }>({});
+  const [transactions, setTransactions] = useState<Record<string, string>>({});
+
+  const fetchTransactions = async () => {
+    try {
+      const response = await ApiService.get<ITransaction[]>('/payments');
+      const txnMap = response.reduce((acc, txn) => {
+        acc[txn.txn_id] = txn.status;
+        return acc;
+      }, {} as Record<string, string>);
+      setTransactions(txnMap);
+    } catch (error) {
+      message.error('Failed to fetch transactions');
+    }
+  };
 
   // Fetch products
   const fetchProducts = async () => {
@@ -193,14 +208,24 @@ const AllCustomer: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchCustomers();
-    fetchTrials();
     fetchProducts();
-    fetchOrders();
     fetchDeliveryPartners();
     fetchAreas();
     fetchSubareas();
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchTransactions(), fetchCustomers(), fetchTrials(), fetchOrders()]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
 
   const columns: ColumnsType<ICustomer> = [
     {
@@ -333,7 +358,7 @@ const AllCustomer: React.FC = () => {
       title: 'Product',
       dataIndex: 'product_id',
       key: 'product_id',
-      width: 300, 
+      width: 300,
       render: (product_id: string) => {
         const product = products[product_id];
         return product ? `${product.name} (${product.size})` : 'Unknown';
@@ -346,11 +371,22 @@ const AllCustomer: React.FC = () => {
       width: 150,
     },
     {
-      title: 'Payment',
+      title: 'Payment Method',
       dataIndex: 'is_cod',
       key: 'is_cod',
       width: 150,
-      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
+      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Online'),
+    },
+    {
+      title: 'Payment Status',
+      dataIndex: 'txn_id',
+      key: 'status',
+      width: 150,
+      render: (txn_id: string) => (
+        <Tag color={transactions[txn_id] === 'success' ? 'green' : 'red'}>
+          {transactions[txn_id] ? transactions[txn_id].toUpperCase() : 'N/A'}
+        </Tag>
+      ),
     },
     {
       title: 'Start Date',
@@ -394,7 +430,7 @@ const AllCustomer: React.FC = () => {
       title: 'Products',
       dataIndex: 'items',
       key: 'items',
-      width: 300, 
+      width: 300,
       render: (_, record) => (
         <div>
           {(record.items || []).map((item) => {
@@ -415,17 +451,41 @@ const AllCustomer: React.FC = () => {
       render: (_, record) => `₹${calculateTotalAmount(record.items).toFixed(2)}`,
     },
     {
-      title: 'Payment',
+      title: 'Payment Method',
       dataIndex: 'is_cod',
       key: 'is_cod',
-      width: 120,
-      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
+      width: 150,
+      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Online'),
+    },
+    {
+      title: 'Payment Status',
+      dataIndex: 'txn_id',
+      key: 'status',
+      width: 150,
+      render: (txn_id: string) => (
+        <Tag color={transactions[txn_id] === 'success' ? 'green' : 'red'}>
+          {transactions[txn_id] ? transactions[txn_id].toUpperCase() : 'N/A'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Order Date',
+      dataIndex: 'creation_date',
+      key: 'creation_date',
+      width: 150,
+      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
+    },
+    {
+      title: 'Delivery Date',
+      dataIndex: 'delivery_date',
+      key: 'delivery_date',
+      width: 150,
+      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 150,
       render: (status) => {
         const getTagColor = (status: string) => {
           switch (status) {
@@ -449,25 +509,12 @@ const AllCustomer: React.FC = () => {
         );
       },
     },
-    {
-      title: 'Order Date',
-      dataIndex: 'creation_date',
-      key: 'creation_date',
-      width: 150,
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
-    },
-    {
-      title: 'Delivery Date',
-      dataIndex: 'delivery_date',
-      key: 'delivery_date',
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
-    },
   ];
 
   const expandedRowRender = (record: ICustomer) => {
     const customerTrials = trials.filter((trial) => trial.customer_id === record.id);
     const customerOrders = orders.filter((order) => order.customer_id === record.id);
-  
+
     return (
       <div className="expanded-row">
         {customerTrials.length > 0 && (
@@ -559,7 +606,7 @@ const AllCustomer: React.FC = () => {
         rowKey="id"
         expandable={{
           expandedRowRender,
-          expandRowByClick: true, 
+          expandRowByClick: true,
           indentSize: 0,
           expandedRowKeys: expandedRowKey ? [expandedRowKey] : [],
           onExpand: handleExpand,
