@@ -165,11 +165,11 @@ const AllCustomer: React.FC = () => {
                   render: (productId: number, record: ITrial) => {
                     const product = products.find((p) => p.id === productId);
                     const variant = product?.variants.find((v) => v.id === record.variant_id);
-                    const qty = product?.variants.find((v) => v.id === record.quantity);
-
+                    const qty = record.quantity;
+                    
                     return product ? (
                         <Tag color="blue" style={{ marginBottom: '8px' }}>
-                        {product.name} {variant && `(${variant.size})`} {qty && `Qty: ${qty}`}
+                        {product.name} {variant && `(${variant.size})`} - {qty && `Qty: ${qty}`}
                         </Tag>
                     ) : (
                       <Tag color="red" style={{ marginBottom: '8px' }}>
@@ -186,6 +186,12 @@ const AllCustomer: React.FC = () => {
                   render: (packaging: 'packet' | 'bottle') => (
                     <span style={{ textTransform: 'capitalize' }}>{packaging}</span>
                   ),
+                },
+                {
+                  title: 'Order Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                  width: 200,
                 },
                 {
                   title: 'Payment Method',
