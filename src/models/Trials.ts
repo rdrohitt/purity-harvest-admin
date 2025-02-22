@@ -8,4 +8,6 @@ export interface ITrial {
     product_id: number;
     customer_id: number;
     status: 'active' | 'ended' ;
+    variant_id: number;
+    quantity: number
   }

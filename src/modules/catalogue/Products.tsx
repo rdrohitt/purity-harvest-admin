@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row, Table, Switch, Popconfirm } from 'antd';
-import ApiService from '../../services/apiService';
-import { IProduct } from '../../models/Product';
+import ApiService, { BASE_URL } from '../../services/apiService';
+import { IProduct, IVariant } from '../../models/Product';
 import { ICategory } from '../../models/Category';
 import { PlusOutlined } from '@ant-design/icons';
 import { TrashFill } from 'react-bootstrap-icons';
 import CustomButton from '../../components/elements/CustomButton';
 import CustomInput from '../../components/elements/CustomInput';
 import AddEditProduct from './AddEditProduct';
+import AddEditProductVariant from './AddEditProductVariant';
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<IProduct[]>([]);
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchText, setSearchText] = useState<string>('');
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isProductModalVisible, setIsProductModalVisible] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
+
+  const [isVariantModalVisible, setIsVariantModalVisible] = useState<boolean>(false);
+  const [currentVariants, setCurrentVariants] = useState<IVariant[]>([]);
+  const [currentProductName, setCurrentProductName] = useState<string>('');
 
   // Fetch products
   const fetchProducts = async () => {
@@ -41,24 +46,31 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories(); // Fetch categories on component load
+    fetchCategories();
   }, []);
 
-  // Filter products based on search text
+  // Handle product search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
   };
 
   // Open modal for adding a new product
   const handleAddProduct = () => {
-    setEditingProduct(null); // Clear any existing product for adding
-    setIsModalVisible(true);
+    setEditingProduct(null); // Clear editing product
+    setIsProductModalVisible(true);
   };
 
   // Open modal for editing an existing product
   const handleEditProduct = (product: IProduct) => {
     setEditingProduct(product);
-    setIsModalVisible(true);
+    setIsProductModalVisible(true);
+  };
+
+  // Open modal for managing variants
+  const handleManageVariants = (product: IProduct) => {
+    setCurrentVariants(product.variants || []);
+    setCurrentProductName(product.name);
+    setIsVariantModalVisible(true);
   };
 
   // Handle product submission from modal
@@ -86,61 +98,50 @@ const Products: React.FC = () => {
       await ApiService.delete<IProduct>(`/products/${id}`);
       fetchProducts();
     } catch (e) {
-      console.log('Error deleting product:', e);
+      console.error('Error deleting product:', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredProducts = products.filter(product =>
+  const handleVariantsChange = (updatedVariants: IVariant[]) => {
+    setCurrentVariants(updatedVariants);
+    // Update the product's variants locally
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.name === currentProductName ? { ...product, variants: updatedVariants } : product
+      )
+    );
+  };
+
+  const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [
     {
+      title: 'Thumbnail',
+      dataIndex: 'thumbnail',
+      render: (thumbnail: string) => (
+        <img src={`${BASE_URL}/${thumbnail}`} alt="Thumbnail" width={50} />
+      ),
+    },
+    {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: IProduct) => (
-        <a className='link' onClick={() => handleEditProduct(record)}>{text}</a>
+        <a className="link" onClick={() => handleEditProduct(record)}>
+          {text}
+        </a>
       ),
-    },
-    {
-      title: 'Size',
-      dataIndex: 'size',
-      key: 'size',
     },
     {
       title: 'Category',
-      dataIndex: 'category_id', // Changed to `category_id` if using category ID here
-      key: 'category',
-      render: (categoryId: number) => categories.find(cat => cat.id === categoryId)?.name || 'Unknown',
-    },
-    {
-      title: 'Actual Price',
-      dataIndex: 'mrp',
-      key: 'mrp',
-    },
-    {
-      title: 'Discounted Price',
-      dataIndex: 'price',
-      key: 'price',
-    },
-    {
-      title: 'Discount',
-      dataIndex: 'discount',
-      key: 'discount',
-      render: (text: number) => `${text}%`,
-    },
-    {
-      title: 'Visible',
-      dataIndex: 'is_visible',
-      key: 'is_visible',
-      render: (isVisible: boolean) => (
-        <Switch
-          checked={isVisible}
-        />
-      ),
+      dataIndex: 'category_id',
+      key: 'category_id',
+      render: (categoryId: number) =>
+        categories.find((cat) => cat.id === categoryId)?.name || 'Unknown',
     },
     {
       title: 'Actions',
@@ -148,17 +149,83 @@ const Products: React.FC = () => {
       width: 50,
       render: (record: IProduct) => (
         <>
-          <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record.id || 0)}>
-            <TrashFill className='trash-icon' />
+          <Popconfirm
+            title="Sure to delete?"
+            onConfirm={() => handleDelete(record.id || 0)}
+          >
+            <TrashFill className="trash-icon" />
           </Popconfirm>
         </>
       ),
     },
   ];
 
+  const expandedRowRender = (record: IProduct) => {
+    const variantColumns = [
+      {
+        title: 'Name',
+        dataIndex: 'name',
+        key: 'name',
+        render: (text: string) => (
+          <a
+            className="link"
+            onClick={() => handleManageVariants(record)}
+          >
+            {text}
+          </a>
+        ),
+      },
+      {
+        title: 'Size',
+        dataIndex: 'size',
+        key: 'size',
+      },
+      {
+        title: 'MRP',
+        dataIndex: 'mrp',
+        key: 'mrp',
+      },
+      {
+        title: 'Discounted Price',
+        dataIndex: 'price',
+        key: 'price',
+      },
+      {
+        title: 'Discount',
+        dataIndex: 'discount',
+        key: 'discount',
+        render: (discount: number) => `${discount}`,
+      },
+      {
+        title: 'Packaging',
+        dataIndex: 'packaging',
+        key: 'packaging',
+      },
+      {
+        title: 'Visible',
+        dataIndex: 'is_visible',
+        key: 'is_visible',
+        render: (isVisible: boolean) => <Switch checked={isVisible} />,
+      },
+    ];
+
+    return (
+      <div className="subscription-expanded-row">
+        <Table
+          bordered
+          className="expanded-table"
+          columns={variantColumns}
+          dataSource={record.variants}
+          rowKey="id"
+          pagination={false}
+        />
+      </div>
+    );
+  };
+
   return (
     <>
-      <h5 className='page-heading'>Products</h5>
+      <h5 className="page-heading">Products</h5>
       <div className="filter-container">
         <Row gutter={16}>
           <Col span={12}>
@@ -169,10 +236,10 @@ const Products: React.FC = () => {
             />
           </Col>
           <Col span={12} style={{ textAlign: 'right' }}>
-            <div className='buttons-container'>
+            <div className="buttons-container">
               <CustomButton
                 text="Add Product"
-                className='primary-button'
+                className="primary-button"
                 icon={<PlusOutlined />}
                 onClick={handleAddProduct}
               />
@@ -180,21 +247,30 @@ const Products: React.FC = () => {
           </Col>
         </Row>
       </div>
-      <div className='tab-container'>
+      <div className="tab-container">
         <Table
           bordered
           dataSource={filteredProducts}
           columns={columns}
           loading={loading}
           rowKey="id"
+          expandable={{
+            expandedRowRender,
+          }}
           pagination={{ pageSize: 50 }}
         />
         <AddEditProduct
-          visible={isModalVisible}
-          onClose={() => setIsModalVisible(false)}
+          visible={isProductModalVisible}
+          onClose={() => setIsProductModalVisible(false)}
           onSubmit={handleProductSubmit}
           product={editingProduct || undefined}
-          categories={categories} // Pass categories to the modal
+          categories={categories}
+        />
+        <AddEditProductVariant
+          visible={isVariantModalVisible}
+          onClose={() => setIsVariantModalVisible(false)}
+          variants={currentVariants}
+          onVariantsChange={handleVariantsChange}
         />
       </div>
     </>

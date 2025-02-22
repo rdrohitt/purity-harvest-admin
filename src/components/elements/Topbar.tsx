@@ -56,6 +56,7 @@ const styles = {
     backgroundColor: '#f1f1f1',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
     height: '60px',
+    // zIndex: '-1'
   },
   userProfile: {
     display: 'flex',

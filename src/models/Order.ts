@@ -5,10 +5,12 @@ export interface IOrderItem {
   discount?: number;
   product_id: number;
   order_id?: number;
+  variant_id: number;
 }
 
 export interface IOrder {
   id?: number;
+  amount: number;
   creation_date?: string;
   delivery_date?: string;
   status?: 'confirmed' | 'rejected' | 'cancelled' | 'delivered';

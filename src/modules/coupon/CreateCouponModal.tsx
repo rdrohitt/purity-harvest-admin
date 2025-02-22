@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, InputNumber, DatePicker, message } from 'antd';
+import { Modal, Form, Input, InputNumber, DatePicker, message, Switch } from 'antd';
 import ApiService from '../../services/apiService';
 import dayjs from 'dayjs';
 
@@ -27,9 +27,11 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
       form.setFieldsValue({
         ...initialValues,
         expiry_date: initialValues.expiry_date ? dayjs(initialValues.expiry_date) : null,
+        is_visible: initialValues.is_visible ?? true, // Default to true if undefined
       });
     } else {
       form.resetFields();
+      form.setFieldsValue({ is_visible: true }); // Default value for new coupons
     }
   }, [mode, initialValues, form]);
 
@@ -39,6 +41,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
       const payload = {
         ...values,
         expiry_date: values.expiry_date.toISOString(),
+        is_visible: values.is_visible, // Pass is_visible to API
       };
 
       if (mode === 'add') {
@@ -46,9 +49,8 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
         message.success('Coupon added successfully!');
       } else if (mode === 'edit') {
         const editpayload = {
-          ...values,
-          expiry_date: values.expiry_date.toISOString(),
-          id: initialValues.id
+          ...payload,
+          id: initialValues.id,
         };
         await ApiService.put('/coupons', editpayload);
         message.success('Coupon updated successfully!');
@@ -86,6 +88,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
             }}
           />
         </Form.Item>
+
         <Form.Item
           name="min_order_value"
           label="Minimum Order Value"
@@ -93,6 +96,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
         >
           <InputNumber placeholder="Enter minimum order value" style={{ width: '100%' }} min={0} />
         </Form.Item>
+
         <Form.Item
           name="discount"
           label="Discount (%)"
@@ -100,6 +104,7 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
         >
           <InputNumber placeholder="Enter discount percentage" style={{ width: '100%' }} min={0} />
         </Form.Item>
+
         <Form.Item
           name="max_discount"
           label="Maximum Discount"
@@ -107,12 +112,22 @@ const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
         >
           <InputNumber placeholder="Enter maximum discount" style={{ width: '100%' }} min={0} />
         </Form.Item>
+
         <Form.Item
           name="expiry_date"
           label="Expiry Date"
           rules={[{ required: true, message: 'Please select the expiry date' }]}
         >
           <DatePicker placeholder="Select expiry date" style={{ width: '100%' }} />
+        </Form.Item>
+
+        {/* ✅ Switch for is_visible */}
+        <Form.Item
+          name="is_visible"
+          label="Is Visible"
+          valuePropName="checked"
+        >
+          <Switch />
         </Form.Item>
       </Form>
     </Modal>

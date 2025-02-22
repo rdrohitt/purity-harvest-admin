@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, Form, Row, Col, Select, Table, Button, Tooltip, DatePicker, message, Popconfirm } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { IOrder, IOrderItem } from '../../models/Order';
-import { IProduct } from '../../models/Product';
+import { IProduct, IVariant } from '../../models/Product';
 import { ColumnsType } from 'antd/es/table';
 import ApiService from '../../services/apiService';
 import dayjs from 'dayjs';
@@ -38,15 +38,13 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
 
         const items = orderData.items
           ? orderData.items.map((item) => {
-            // Match item product_id with product data to set the price
-            const product = productData.find((product) => product.id === item.product_id);
-            return {
-              ...item,
-              price: product?.price || 0, // Use product price or default to 0
-              quantity: item.quantity || 1,
-              discount: item.discount || 0,
-            };
-          })
+              const product = productData.find((product) => product.id === item.product_id);
+              const variant = product?.variants.find((v) => v.id === item.variant_id);
+              return {
+                ...item,
+                price: variant?.price || 0,
+              };
+            })
           : [];
         setModalItems(items);
       });
@@ -54,34 +52,32 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
   }, [orderData, visible]);
 
   useEffect(() => {
-    // Fetch data for dropdowns only when modal is visible
-    const fetchDropdownData = async () => {
-      try {
-        const [customerResponse, deliveryBoyResponse, productResponse, couponResponse] = await Promise.all([
-          ApiService.get<{ id: number; name: string }[]>('/customers'),
-          ApiService.get<{ id: number; name: string }[]>('/delivery_boys'),
-          ApiService.get<IProduct[]>('/products'),
-          ApiService.get<ICoupon[]>('/coupons'),
-        ]);
+    if (visible) {
+      const fetchDropdownData = async () => {
+        try {
+          const [customerResponse, deliveryBoyResponse, couponResponse] = await Promise.all([
+            ApiService.get<{ id: number; name: string }[]>('/customers'),
+            ApiService.get<{ id: number; name: string }[]>('/delivery_boys'),
+            ApiService.get<ICoupon[]>('/coupons'),
+          ]);
 
-        setCustomers(customerResponse);
-        setDeliveryBoys(deliveryBoyResponse);
-        setProducts(productResponse);
-        setCoupons(couponResponse);
-      } catch (error) {
-        console.error('Failed to fetch dropdown data:', error);
-      }
-    };
+          setCustomers(customerResponse);
+          setDeliveryBoys(deliveryBoyResponse);
+          setCoupons(couponResponse);
+        } catch (error) {
+          message.error('Failed to fetch dropdown data.');
+        }
+      };
 
-    if (visible) fetchDropdownData();
+      fetchDropdownData();
+    }
   }, [visible]);
 
   const calculateSubtotal = () => {
     return modalItems.reduce((total, item) => {
       const product = products.find((product) => product.id === item.product_id);
-      const price = product?.price || 0; // Fetch price from products data
-      const itemTotal = price * item.quantity - (item.discount || 0);
-      return total + itemTotal;
+      const variant = product?.variants.find((v) => v.id === item.variant_id);
+      return total + (variant?.price || 0) * item.quantity - (item.discount || 0);
     }, 0);
   };
 
@@ -100,31 +96,30 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
     const subtotal = calculateSubtotal();
     const discount = modalData.discount || 0;
     const deliveryCharges = modalData.delivery_charges || 0;
-    const couponDiscount = calculateCouponDiscount(); // Fetch coupon discount
+    const couponDiscount = calculateCouponDiscount();
     return subtotal - discount - couponDiscount + deliveryCharges;
   };
 
-  const formatDataForAPI = (): Partial<IOrder> => {
-    return {
-      id: orderData.id,
-      status: modalData.status,
-      discount: modalData.discount || 0,
-      delivery_charges: modalData.delivery_charges || 0,
-      customer_id: modalData.customer_id || 0,
-      coupon_id: modalData.coupon_id || null,
-      delivery_boy_id: modalData.delivery_boy_id || null,
-      creation_date: dayjs(modalData.creation_date).format('YYYY-MM-DDTHH:mm:ss'),
-      delivery_date: dayjs(modalData.delivery_date).format('YYYY-MM-DDTHH:mm:ss'),
-      items: modalItems.map((item) => ({
-        id: item.id,
-        order_id: item.order_id,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        packaging: item.packaging,
-        discount: item.discount || 0,
-      })),
-    };
-  };
+  const formatDataForAPI = (): Partial<IOrder> => ({
+    id: orderData.id,
+    status: modalData.status,
+    discount: modalData.discount || 0,
+    delivery_charges: modalData.delivery_charges || 0,
+    customer_id: modalData.customer_id || 0,
+    coupon_id: modalData.coupon_id || null,
+    delivery_boy_id: modalData.delivery_boy_id || null,
+    creation_date: dayjs(modalData.creation_date).format('YYYY-MM-DDTHH:mm:ss'),
+    delivery_date: dayjs(modalData.delivery_date).format('YYYY-MM-DDTHH:mm:ss'),
+    items: modalItems.map((item) => ({
+      id: item.id,
+      order_id: item.order_id,
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      packaging: item.packaging,
+      discount: item.discount || 0,
+    })),
+  });
 
   const handleSave = async () => {
     const formattedData = formatDataForAPI();
@@ -133,39 +128,34 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
       setLoading(true);
       await ApiService.put('/orders', formattedData);
       message.success('Order updated successfully!');
-
-      onSave(formattedData as IOrder); // Notify parent component
-      onClose(); // Close the modal
+      onSave(formattedData as IOrder);
+      onClose();
     } catch (error) {
       console.error('Failed to save order:', error);
-      message.error('Failed to save order. Please try again.');
+      message.error('Failed to save order.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteItem = async (id: number, index: number) => {
-    try {
-      await ApiService.delete(`/orders/${id}/item`);
-    } catch (error) {
-      console.error('Failed to delete item:', error);
-    }
+  const handleDeleteItem = (index: number) => {
     setModalItems((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleProductSelect = (productId: number, index: number) => {
+  const handleProductSelect = (productId: number, variantId: number, index: number) => {
     const selectedProduct = products.find((product) => product.id === productId);
+    const selectedVariant = selectedProduct?.variants.find((variant) => variant.id === variantId);
 
-    if (selectedProduct) {
+    if (selectedProduct && selectedVariant) {
       setModalItems((prev) =>
         prev.map((item, idx) =>
           idx === index
             ? {
-              ...item,
-              product_id: productId,
-              name: selectedProduct.name,
-              price: selectedProduct.price,
-            }
+                ...item,
+                product_id: productId,
+                variant_id: variantId,
+                price: selectedVariant.price || 0,
+              }
             : item
         )
       );
@@ -179,16 +169,21 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
       key: 'product_id',
       render: (_, record, index) => (
         <Select
-          value={record.product_id || undefined}
-          onChange={(value: number) => handleProductSelect(value, index)}
           style={{ width: '100%' }}
           placeholder="Select Product"
+          value={`${record.product_id}-${record.variant_id}`}
+          onChange={(value) => {
+            const [productId, variantId] = value.split('-').map(Number);
+            handleProductSelect(productId, variantId, index);
+          }}
         >
-          {products.map((product) => (
-            <Option key={product.id} value={product.id}>
-              {product.name}
-            </Option>
-          ))}
+          {products.map((product) =>
+            product.variants.map((variant) => (
+              <Option key={`${product.id}-${variant.id}`} value={`${product.id}-${variant.id}`}>
+                {`${product.name} - ${variant.size}`}
+              </Option>
+            ))
+          )}
         </Select>
       ),
     },
@@ -196,16 +191,17 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
       title: 'Price',
       dataIndex: 'price',
       key: 'price',
-      render: (price, record) => {
+      render: (_, record) => {
         const product = products.find((product) => product.id === record.product_id);
-        return `₹${(product?.price || price || 0).toFixed(2)}`;
+        const variant = product?.variants.find((v) => v.id === record.variant_id);
+        return `₹${variant?.price?.toFixed(2) || '0.00'}`;
       },
     },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
-      render: (quantity: number, record, index) => (
+      render: (quantity, record, index) => (
         <Input
           type="number"
           value={quantity}
@@ -220,69 +216,19 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
       ),
     },
     {
-      title: 'Packaging',
-      dataIndex: 'packaging',
-      key: 'packaging',
-      render: (packaging: 'packet' | 'bottle', record, index) => (
-        <Select
-          disabled
-          value={packaging}
-          onChange={(value) =>
-            setModalItems((prev) =>
-              prev.map((item, idx) =>
-                idx === index ? { ...item, packaging: value } : item
-              )
-            )
-          }
-          style={{ width: '100%' }}
-        >
-          <Option value="packet">Packet</Option>
-          <Option value="bottle">Bottle</Option>
-        </Select>
-      ),
-    },
-    {
-      title: 'Discount',
-      dataIndex: 'discount',
-      key: 'discount',
-      render: (discount: number, record, index) => (
-        <Input
-          type="number"
-          value={discount}
-          onChange={(e) =>
-            setModalItems((prev) =>
-              prev.map((item, idx) =>
-                idx === index ? { ...item, discount: Number(e.target.value) } : item
-              )
-            )
-          }
-        />
-      ),
-    },
-    {
       title: 'Total',
       key: 'total',
-      render: (record) => {
+      render: (_, record) => {
         const product = products.find((product) => product.id === record.product_id);
-        const price = product?.price || 0;
-        const quantity = record.quantity || 0; // Default to 0 if quantity is undefined
-        const discount = record.discount || 0; // Default to 0 if discount is undefined
-
-        const total = price * quantity - discount;
-
-        return `₹${total.toFixed(2)}`;
+        const variant = product?.variants.find((v) => v.id === record.variant_id);
+        return `₹${((variant?.price || 0) * record.quantity).toFixed(2)}`;
       },
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (record, __, index) => (
-        <Popconfirm
-          title="Are you sure you want to delete this item?"
-          onConfirm={() => handleDeleteItem(record.id, index)}
-          okText="Yes"
-          cancelText="No"
-        >
+      render: (_, record, index) => (
+        <Popconfirm title="Are you sure to delete this item?" onConfirm={() => handleDeleteItem(index)}>
           <Tooltip title="Delete">
             <DeleteOutlined style={{ color: 'red', cursor: 'pointer' }} />
           </Tooltip>
@@ -293,25 +239,21 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
 
   return (
     <Modal
-      title={orderData.id ? `Edit Order - ${orderData.id}` : 'Add Order'}
+      title={`Edit Order - ${selectedOrderId}`}
       open={visible}
       onCancel={onClose}
       onOk={handleSave}
-      okText="Save Order"
-      confirmLoading={loading} // Add loading state
+      okText="Save"
+      confirmLoading={loading}
       width={1000}
     >
       <Form layout="vertical" form={form}>
-
         <Row gutter={16}>
-          {/* Row with 4 fields */}
           <Col span={6}>
-            <Form.Item label="Customer Name">
+            <Form.Item label="Customer">
               <Select
-                disabled
                 value={modalData.customer_id}
-                onChange={(value) => setModalData((prevData) => ({ ...prevData, customer_id: value }))}
-                placeholder="Select Customer"
+                onChange={(value) => setModalData((prev) => ({ ...prev, customer_id: value }))}
               >
                 {customers.map((customer) => (
                   <Option key={customer.id} value={customer.id}>
@@ -325,8 +267,7 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
             <Form.Item label="Delivery Boy">
               <Select
                 value={modalData.delivery_boy_id}
-                onChange={(value) => setModalData((prevData) => ({ ...prevData, delivery_boy_id: value }))}
-                placeholder="Select Delivery Boy"
+                onChange={(value) => setModalData((prev) => ({ ...prev, delivery_boy_id: value }))}
               >
                 {deliveryBoys.map((boy) => (
                   <Option key={boy.id} value={boy.id}>
@@ -339,67 +280,18 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
           <Col span={6}>
             <Form.Item label="Order Date">
               <DatePicker
-                style={{ width: '100%' }}
                 value={modalData.creation_date ? dayjs(modalData.creation_date) : null}
-                onChange={(date) => setModalData((prevData) => ({ ...prevData, creation_date: date?.toISOString() }))}
+                onChange={(date) => setModalData((prev) => ({ ...prev, creation_date: date?.toISOString() }))}
+                style={{ width: '100%' }}
               />
             </Form.Item>
           </Col>
           <Col span={6}>
             <Form.Item label="Delivery Date">
               <DatePicker
-                style={{ width: '100%' }}
                 value={modalData.delivery_date ? dayjs(modalData.delivery_date) : null}
-                onChange={(date) => setModalData((prevData) => ({ ...prevData, delivery_date: date?.toISOString() }))}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          {/* Row with 3 fields */}
-          <Col span={8}>
-            <Form.Item label="Coupon">
-              <Select
-                value={modalData.coupon_id}
-                onChange={(value) => setModalData((prevData) => ({ ...prevData, coupon_id: value }))}
-                placeholder="Select Coupon"
-              >
-                {coupons.map((coupon) => (
-                  <Option key={coupon.id} value={coupon.id}>
-                    {coupon.code}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Delivery Charges">
-              <Input
-                type="number"
-                value={modalData.delivery_charges}
-                onChange={(e) =>
-                  setModalData((prevData) => ({
-                    ...prevData,
-                    delivery_charges: Number(e.target.value),
-                  }))
-                }
-                placeholder="Enter Delivery Charges"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Discount">
-              <Input
-                type="number"
-                value={modalData.discount}
-                onChange={(e) =>
-                  setModalData((prevData) => ({
-                    ...prevData,
-                    discount: Number(e.target.value),
-                  }))
-                }
-                placeholder="Enter Discount"
+                onChange={(date) => setModalData((prev) => ({ ...prev, delivery_date: date?.toISOString() }))}
+                style={{ width: '100%' }}
               />
             </Form.Item>
           </Col>
@@ -408,32 +300,27 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
         <Table
           columns={itemColumns}
           dataSource={modalItems}
+          rowKey={(record) => `${record.product_id}-${record.variant_id}-${record.quantity}`}
           pagination={false}
           bordered
-          rowKey={(record) => record.product_id}
         />
+
         <div className="bill-summary">
-          <h3 className="bill-summary-heading">Bill Summary</h3>
-          <Row gutter={16} className="bill-summary-details">
+          <h3>Bill Summary</h3>
+          <Row gutter={16}>
             <Col span={12}>
               <p>Subtotal:</p>
               <p>Discount:</p>
               <p>Coupon Applied:</p>
               <p>Delivery Charges:</p>
-              <div className="dotted-line"></div>
-              <p className="total">Total:</p>
+              <p>Total:</p>
             </Col>
-            <Col span={12} className="bill-summary-amounts">
+            <Col span={12}>
               <p>₹{calculateSubtotal().toFixed(2)}</p>
-              <p className="green">₹{modalData.discount || 0}</p>
-              <p className="green">
-                {modalData.coupon_id
-                  ? `₹${calculateCouponDiscount().toFixed(2)}`
-                  : 'N/A'}
-              </p>
+              <p>₹{modalData.discount || 0}</p>
+              <p>₹{calculateCouponDiscount().toFixed(2)}</p>
               <p>₹{modalData.delivery_charges || 0}</p>
-              <div className="dotted-line"></div>
-              <p className="total">₹{calculateGrandTotal().toFixed(2)}</p>
+              <p>₹{calculateGrandTotal().toFixed(2)}</p>
             </Col>
           </Row>
         </div>

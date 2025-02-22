@@ -15,4 +15,6 @@ export interface ICustomer {
     is_active?: boolean;
     fcm?: string;
     creation_date?: string;
+    credit_limit: number;
+    referal_code?: string;
   }

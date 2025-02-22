@@ -35,7 +35,7 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> =
 
   return (
     <>
-      <nav className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
+      <nav className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`} >
         <div>
           {/* Logo with circular background */}
           <div className="sidebar-header">

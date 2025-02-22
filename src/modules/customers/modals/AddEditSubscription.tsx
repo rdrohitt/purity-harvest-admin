@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Select, DatePicker, Button, Row, Col, message } from "antd";
+import { Modal, Form, Input, Select, DatePicker, Button, Row, Col, message, Switch } from "antd";
 import { ICustomer } from "../../../models/Customer";
-import { IProduct } from "../../../models/Product";
+import { IProduct, IVariant } from "../../../models/Product";
 import ApiService from "../../../services/apiService";
 import dayjs from "dayjs";
 
@@ -11,8 +11,8 @@ interface SubscriberModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
-  initialValues?: any; // Pass initial values for editing
-  isEdit?: boolean; // True if the modal is for editing
+  initialValues?: any;
+  isEdit?: boolean;
 }
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -27,43 +27,9 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
   const [form] = Form.useForm();
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [products, setProducts] = useState<IProduct[]>([]);
+  const [variants, setVariants] = useState<IVariant[]>([]);
   const [weekQuantities, setWeekQuantities] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(false);
-
-  const preprocessWeek = (week: string): string => {
-    return week
-      .replace(/'/g, '"') // Replace single quotes with double quotes
-      .replace(/([a-zA-Z0-9_]+):/g, '"$1":'); // Add quotes around keys if missing
-  };
-
-  const initializeWeekQuantities = () => {
-    if (initialValues?.week) {
-      try {
-        const sanitizedWeek = preprocessWeek(initialValues.week);
-        const parsedWeek = JSON.parse(sanitizedWeek); // Parse sanitized string
-  
-        // Handle object format (e.g., {"Mon": 3, "Tue": 1}) and convert to array format
-        const weekArray = Array.isArray(parsedWeek)
-          ? parsedWeek
-          : Object.entries(parsedWeek).map(([day, qty]) => ({ [day]: qty }));
-  
-        const weekQuantities = daysOfWeek.reduce((acc, day) => {
-          const dayData = weekArray.find((item: any) => Object.keys(item)[0] === day);
-          acc[day] = dayData ? Number(Object.values(dayData)[0]) : 0;
-          return acc;
-        }, {} as { [key: string]: number });
-  
-        setWeekQuantities(weekQuantities);
-      } catch (error) {
-        console.error("Failed to parse week data:", error);
-        // Default to all 0 in case of error
-        setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
-      }
-    } else {
-      // Default to all 0 if no week data is present
-      setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
-    }
-  };
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -81,7 +47,6 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
         setLoading(false);
       }
     };
-
     fetchDropdownData();
   }, []);
 
@@ -94,43 +59,36 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
           end_date: initialValues.end_date ? dayjs(initialValues.end_date) : null,
         };
         form.setFieldsValue(formattedValues);
+
+        if (initialValues.product_id) {
+          handleProductChange(initialValues.product_id, initialValues.variant_id);
+        }
       } else {
-        form.resetFields(); // Reset fields for Add mode
+        form.resetFields();
       }
-      initializeWeekQuantities(); // Populate week quantities
+      initializeWeekQuantities();
     }
   }, [visible, isEdit, initialValues, form]);
 
-  const handleFinish = (values: any) => {
-    const weekString = JSON.stringify(weekQuantities);
-    const isActive = initialValues?.is_active ?? true; // Default to true if is_active is not available
-  
-    const formattedValues = {
-      ...values,
-      start_date: values.start_date?  dayjs(values.start_date).format('YYYY-MM-DDTHH:mm:ss') : null,
-      end_date: values.end_date ? dayjs(values.end_date).format('YYYY-MM-DDTHH:mm:ss') : null,
-      week: weekString,
-      is_active: isActive,
-    };
-  
-    onSubmit(formattedValues);
-    form.resetFields();
-  };
-
-
-  const handleProductChange = (productId: number) => {
-    // Find the selected product
-    const selectedProduct = products.find((product) => product.id === productId);
-    if (selectedProduct) {
-      // Update the form's price field with the product's price
-      form.setFieldsValue({ price: selectedProduct.price });
+  const initializeWeekQuantities = () => {
+    if (initialValues?.week) {
+      try {
+        const parsedWeek = JSON.parse(initialValues.week);
+        setWeekQuantities(parsedWeek);
+      } catch (error) {
+        setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
+      }
+    } else {
+      setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
     }
   };
 
-  const handleCancel = () => {
-    form.resetFields();
-    setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
-    onClose();
+  const handleProductChange = (productId: number, variantId?: number) => {
+    const selectedProduct = products.find((product) => product.id === productId);
+    if (selectedProduct) {
+      setVariants(selectedProduct.variants || []);
+      form.setFieldsValue({ variant_id: variantId ?? undefined });
+    }
   };
 
   const handleIncrement = (day: string) => {
@@ -144,31 +102,40 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
     }));
   };
 
+  const handleFinish = (values: any) => {
+    const formattedValues = {
+      ...values,
+      start_date: values.start_date ? dayjs(values.start_date).format("YYYY-MM-DDTHH:mm:ss") : null,
+      end_date: values.end_date ? dayjs(values.end_date).format("YYYY-MM-DDTHH:mm:ss") : null,
+      week: JSON.stringify(weekQuantities),
+      is_active: values?.is_active ?? true,
+    };
+    onSubmit(formattedValues);
+    form.resetFields();
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    setWeekQuantities(daysOfWeek.reduce((acc, day) => ({ ...acc, [day]: 0 }), {}));
+    onClose();
+  };
+
   return (
     <Modal
       open={visible}
-      title={isEdit ? "Edit Subscriber" : "Add Subscriber"}
+      title={isEdit ? "Edit Subscription" : "Add Subscription"}
       onCancel={handleCancel}
       width={1000}
       footer={[
         <Button key="cancel" onClick={handleCancel}>
           Cancel
         </Button>,
-        <Button
-          key="submit"
-          type="primary"
-          loading={loading}
-          onClick={() => form.submit()}
-        >
-          {isEdit ? "Save Changes" : "Add Subscriber"}
+        <Button key="submit" type="primary" loading={loading} onClick={() => form.submit()}>
+          {isEdit ? "Save Changes" : "Add Subscription"}
         </Button>,
       ]}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleFinish}
-      >
+      <Form form={form} layout="vertical" onFinish={handleFinish}>
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
@@ -176,7 +143,7 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
               label="Customer Name"
               rules={[{ required: true, message: "Please select a customer" }]}
             >
-              <Select placeholder="Select a customer" loading={loading} disabled={isEdit ? true : false}>
+              <Select placeholder="Select a customer" loading={loading} disabled={isEdit}>
                 {customers.map((customer) => (
                   <Option key={customer.id} value={customer.id}>
                     {customer.name} ({customer.mobile || "No Mobile"})
@@ -188,10 +155,15 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
           <Col span={8}>
             <Form.Item
               name="product_id"
-              label="Product"
+              label="Product Name"
               rules={[{ required: true, message: "Please select a product" }]}
             >
-              <Select placeholder="Select a product" onChange={handleProductChange} loading={loading} disabled={isEdit ? true : false}>
+              <Select
+                placeholder="Select a product"
+                onChange={(value) => handleProductChange(value)}
+                loading={loading}
+                disabled={isEdit}
+              >
                 {products.map((product) => (
                   <Option key={product.id} value={product.id}>
                     {product.name}
@@ -202,14 +174,21 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
           </Col>
           <Col span={8}>
             <Form.Item
-              name="price"
-              label="Price"
-              rules={[{ required: true, message: "Please enter a price" }]}
+              name="variant_id"
+              label="Variant Name"
+              rules={[{ required: true, message: "Please select a variant" }]}
             >
-              <Input type="number" placeholder="Enter price" />
+              <Select placeholder="Select a variant" loading={loading} disabled={isEdit}>
+                {variants.map((variant) => (
+                  <Option key={variant.id} value={variant.id}>
+                    {variant.name}
+                  </Option>
+                ))}
+              </Select>
             </Form.Item>
           </Col>
         </Row>
+
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item
@@ -242,32 +221,60 @@ const AddEditSubscription: React.FC<SubscriberModalProps> = ({
           </Col>
         </Row>
         <Row gutter={16}>
+        <Col span={8}>
+            <Form.Item
+              name="type"
+              label="Payment Type"
+              rules={[{ required: true, message: "Please select a type" }]}
+            >
+              <Select placeholder="Select type">
+                <Option value="prepaid">Prepaid</Option>
+                <Option value="postpaid">Postpaid</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="price" label="Price">
+              <Input type="number" placeholder="Enter price" />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="is_active" label="Status" valuePropName="checked">
+              <Switch
+                checkedChildren="Active"
+                unCheckedChildren="Inactive"
+                onChange={(checked) => form.setFieldsValue({ is_active: checked })}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
           <Col span={24}>
             <Form.Item label="Week">
-              <Row gutter={[16, 16]}>
+              <div className="week-container">
                 {daysOfWeek.map((day) => (
-                  <Col key={day} span={3} style={{ textAlign: "center" }}>
-                    <div>{day}</div>
-                    <div>
+                  <div key={day} className="week-day-box">
+                    <div className="day-label">{day}</div>
+                    <div className="quantity-controls">
                       <Button
                         onClick={() => handleDecrement(day)}
                         size="small"
-                        style={{ margin: "0 5px" }}
+                        className="quantity-btn"
                       >
                         -
                       </Button>
-                      <span>{weekQuantities[day]}</span>
+                      <span className="quantity-value">{weekQuantities[day]}</span>
                       <Button
                         onClick={() => handleIncrement(day)}
                         size="small"
-                        style={{ margin: "0 5px" }}
+                        className="quantity-btn"
                       >
                         +
                       </Button>
                     </div>
-                  </Col>
+                  </div>
                 ))}
-              </Row>
+              </div>
             </Form.Item>
           </Col>
         </Row>

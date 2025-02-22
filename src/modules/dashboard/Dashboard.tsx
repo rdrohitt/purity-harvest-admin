@@ -36,7 +36,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-         const response = await ApiService.get<DashboardStats>('/website/get_count');
+        const response = await ApiService.get<DashboardStats>('/website/get_count');
         setDashboardStats(response);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
         <Row gutter={[20, 20]} justify="space-between">
           {customerStats.map((stat, index) => (
             <Col key={index} xs={24} sm={12} md={8} lg={6}>
-              <Card className="stat-card">
+              <Card className="stat-card" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/customers/all'}>
                 <div className="stat-content">
                   {stat.icon}
                   <div className="stat-details">
@@ -97,7 +97,7 @@ const Dashboard: React.FC = () => {
       </Card>
 
       <Row gutter={20} style={{ marginTop: '20px' }}>
-        <Col xs={24} lg={12} style={{marginTop: '10px'}}>
+        <Col xs={24} lg={12} style={{ marginTop: '10px' }}>
           <Card title="Today's Orders Summary" bordered={false}>
             <Row gutter={[20, 20]}>
               {orderStats.map((stat, index) => (
@@ -116,7 +116,7 @@ const Dashboard: React.FC = () => {
             </Row>
           </Card>
         </Col>
-        <Col xs={24} lg={12} style={{marginTop: '10px'}}>
+        <Col xs={24} lg={12} style={{ marginTop: '10px' }}>
           <Card title="Today Deliveries" bordered={false}>
             <Row gutter={[20, 20]}>
               {deliveryStats.map((stat, index) => (
@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
       <Card title="Sales" bordered={false} style={{ marginTop: '15px' }}>
         <Row gutter={[20, 20]}>
           {salesStats.map((stat, index) => (
-            <Col key={index} xs={24} sm={12} md={8} lg={6} style={{marginTop: '10px'}}>
+            <Col key={index} xs={24} sm={12} md={8} lg={6} style={{ marginTop: '10px' }}>
               <Card className="stat-card">
                 <div className="stat-content">
                   {stat.icon}

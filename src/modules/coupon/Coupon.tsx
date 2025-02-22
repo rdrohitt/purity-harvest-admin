@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Row, Table, message } from 'antd';
+import { Col, Row, Table, message, Switch } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import ApiService from '../../services/apiService';
 import { ICoupon } from '../../models/Coupon';
@@ -39,7 +39,7 @@ const Coupon: React.FC = () => {
       key: 'code',
       render: (code, record) => (
         <a
-         className='link'
+          className='link'
           onClick={() => {
             setSelectedCoupon(record);
             setModalMode('edit');
@@ -79,6 +79,19 @@ const Coupon: React.FC = () => {
       dataIndex: 'creation_date',
       key: 'creation_date',
       render: (date) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: 'Visible',
+      dataIndex: 'is_visible',
+      key: 'is_visible',
+      render: (isVisible: boolean, record: ICoupon) => (
+        <Switch
+          checked={isVisible}
+        //  onChange={(checked) => handleToggleVisibility(record, checked)}
+          checkedChildren="Yes"
+          unCheckedChildren="No"
+        />
+      ),
     },
   ];
 

@@ -25,7 +25,7 @@ const Orders: React.FC = () => {
     const [currentOrder, setCurrentOrder] = useState<Partial<IOrder>>({});
     const [loading, setLoading] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>('');
-    const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null]>([null, null]);
+    const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
     const [selectedOrderId, setSelectedOrderId] = useState<number>(0);
 
     // Fetch orders
@@ -78,20 +78,30 @@ const Orders: React.FC = () => {
         return products.find((product) => product.id === productId) || { name: 'Unknown', price: 0 };
     };
 
+    const getProductVariantDetails = (productId: number, variantId: number) => {
+        const product = products.find((p) => p.id === productId);
+        const variant = product?.variants.find((v) => v.id === variantId);
+        return variant
+          ? {
+              name: `${product?.name || 'Unknown'} (${variant.size})`,
+              price: variant.price,
+            }
+          : { name: 'Unknown Product', price: 0 };
+      };
+
     // Get customer name by ID
     const getCustomerName = (customerId: number) => {
         const customer = customers.find((c) => c.id === customerId);
         return customer ? customer.name : 'Unknown Customer';
     };
 
-    // Calculate total amount for each order
     const calculateTotalAmount = (items: IOrder['items'] | undefined) => {
-        // Use an empty array as a fallback for undefined items
         return (items || []).reduce((total, item) => {
-            const product = getProductDetails(item.product_id);
-            return total + item.quantity * product.price;
+          const { price } = getProductVariantDetails(item.product_id, item.product_id!);
+          return total + item.quantity * price;
         }, 0);
-    };
+      };
+    
 
     const handleAddModalClose = () => {
         setIsAddModalVisible(false);
@@ -191,18 +201,20 @@ const Orders: React.FC = () => {
             dataIndex: 'items',
             key: 'items',
             render: (_, record) => (
-                <div>
-                    {(record.items || []).map((item) => {
-                        const product = getProductDetails(item.product_id);
-                        return (
-                            <Tag key={item.product_id} color="blue" style={{ marginBottom: '8px' }}>
-                                {product.name} - Qty: {item.quantity}, Price: ₹{product.price.toFixed(2)} / pc
-                            </Tag>
-                        );
-                    })}
-                </div>
+              <div>
+                {(record.items || []).map((item) => {
+                  // Always return a valid 'name' and 'price'
+                  const { name, price } = getProductVariantDetails(item.product_id, item.product_id!);
+          
+                  return (
+                    <Tag key={`${item.product_id}-${item.product_id!}`} color="blue" style={{ marginBottom: '8px' }}>
+                      {name} - Qty: {item.quantity}, Price: ₹{price.toFixed(2)} / pc
+                    </Tag>
+                  );
+                })}
+              </div>
             ),
-        },
+          },
         {
             title: 'Total Amount',
             key: 'totalAmount',

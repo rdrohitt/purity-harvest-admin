@@ -30,11 +30,10 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                // Set email and app_version to null if not provided
                 const customerData = {
                     ...values,
                     email: values.email || null,
-                    app_version: values.app_version || null,
+                    app_version: values.app_version || 'N/A',
                 };
                 onSubmit(customerData);
                 form.resetFields();
@@ -90,8 +89,8 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={8}>
-                        <Form.Item name="address" label="Address" rules={[{ required: true, message: 'Address is required' }]}>
+                <Col span={8}>
+                        <Form.Item name="pin" label="PIN" rules={[{ required: true, message: 'PIN is required' }]}>
                             <Input />
                         </Form.Item>
                     </Col>
@@ -108,8 +107,8 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={8}>
-                        <Form.Item name="pin" label="PIN" rules={[{ required: true, message: 'PIN is required' }]}>
+                <Col span={8}>
+                        <Form.Item name="address" label="Address" rules={[{ required: true, message: 'Address is required' }]}>
                             <Input />
                         </Form.Item>
                     </Col>
@@ -154,7 +153,7 @@ const AddCustomerModal: React.FC<AddCustomerModalProps> = ({
                         </Form.Item>
                     </Col>
                     <Col span={8}>
-                        <Form.Item name="app_version" label="App Version">
+                        <Form.Item name="credit_limit" label="Credit Limit">
                             <Input />
                         </Form.Item>
                     </Col>

@@ -22,7 +22,7 @@ const Orders: React.FC = () => {
   const [currentOrder, setCurrentOrder] = useState<Partial<IOrder>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [searchText, setSearchText] = useState<string>('');
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null]>([null, null]);
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
   const [selectedOrderId, setSelectedOrderId] = useState<number>(0);
 
   // Fetch orders
@@ -70,24 +70,16 @@ const Orders: React.FC = () => {
     fetchCustomers();
   }, []);
 
-  // Get product details by ID
-  const getProductDetails = (productId: number) => {
-    return products.find((product) => product.id === productId) || { name: 'Unknown', price: 0 };
+  // Get product variant details by product and variant IDs
+  const getProductVariantDetails = (productId: number, variantId: number) => {
+    const product = products.find((p) => p.id === productId);
+    return product?.variants.find((v) => v.id === variantId) || null;
   };
 
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
     const customer = customers.find((c) => c.id === customerId);
     return customer ? customer.name : 'Unknown Customer';
-  };
-
-  // Calculate total amount for each order
-  const calculateTotalAmount = (items: IOrder['items'] | undefined) => {
-    // Use an empty array as a fallback for undefined items
-    return (items || []).reduce((total, item) => {
-      const product = getProductDetails(item.product_id);
-      return total + item.quantity * product.price;
-    }, 0);
   };
 
   const handleAddModalClose = () => {
@@ -119,15 +111,8 @@ const Orders: React.FC = () => {
       }
 
       const payload = {
-        discount: order.discount || 0,
-        delivery_charges: order.delivery_charges || 0,
-        id: order.id,
-        customer_id: order.customer_id,
-        delivery_date: order.delivery_date,
-        delivery_boy_id: order.delivery_boy_id || null,
-        coupon_id: order.coupon_id || null,
+        ...order,
         status,
-        items: order.items
       };
 
       await ApiService.put('/orders', payload);
@@ -146,7 +131,7 @@ const Orders: React.FC = () => {
     }
     setIsEditModalVisible(false);
     setIsAddModalVisible(false);
-    fetchOrders()
+    fetchOrders();
   };
 
   // Filter data based on search text
@@ -154,8 +139,8 @@ const Orders: React.FC = () => {
     setSearchText(e.target.value.toLowerCase());
     const filtered = orders.filter((order) =>
       order.items.some((item) => {
-        const product = getProductDetails(item.product_id);
-        return product.name.toLowerCase().includes(e.target.value.toLowerCase());
+        const variant = item.product_id && item.variant_id ? getProductVariantDetails(item.product_id, item.variant_id) : null;
+        return variant?.name.toLowerCase().includes(e.target.value.toLowerCase());
       })
     );
     setOrders(filtered);
@@ -192,10 +177,11 @@ const Orders: React.FC = () => {
       render: (_, record) => (
         <div>
           {(record.items || []).map((item) => {
-            const product = getProductDetails(item.product_id);
+            const product = products.find((p) => p.id === item.product_id); // Get the product details
+            const variant = item.product_id && item.variant_id ? getProductVariantDetails(item.product_id, item.variant_id) : null;
             return (
               <Tag key={item.product_id} color="blue" style={{ marginBottom: '8px' }}>
-                {product.name} - Qty: {item.quantity}, Price: ₹{product.price.toFixed(2)} / pc
+                {product?.name || 'Unknown Product'} - {variant?.name || 'Unknown Variant'} - Qty: {item.quantity}, Packaging: {item.packaging}, Price: ₹{(variant?.price || 0).toFixed(2)}
               </Tag>
             );
           })}
@@ -203,45 +189,23 @@ const Orders: React.FC = () => {
       ),
     },
     {
-      title: 'Total Amount',
-      key: 'totalAmount',
+      title: 'Order Amount',
+      key: 'amount',
+      dataIndex: 'amount',
       width: 130,
-      render: (_, record) => `₹${calculateTotalAmount(record.items).toFixed(2)}`,
     },
-    {
-      title: 'Payment',
-      dataIndex: 'is_cod',
-      key: 'is_cod',
-      width: 120,
-      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
-  },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (status) => {
-        const getTagColor = (status: string) => {
-          switch (status) {
-            case 'confirmed':
-              return 'blue'; // Blue for confirmed
-            case 'delivered':
-              return 'green'; // Green for delivered
-            case 'cancelled':
-              return 'red'; // Red for cancelled
-            case 'rejected':
-              return 'orange'; // Orange for rejected
-            default:
-              return 'default'; // Default grey for other statuses
-          }
-        };
-
-        return (
-          <Tooltip title={`Status: ${status}`}>
-            <Tag color={getTagColor(status)}>{status.toUpperCase()}</Tag>
-          </Tooltip>
-        );
-      },
+      render: (status) => (
+        <Tooltip title={`Status: ${status}`}>
+          <Tag color={status === 'delivered' ? 'green' : status === 'cancelled' ? 'red' : 'blue'}>
+            {status.toUpperCase()}
+          </Tag>
+        </Tooltip>
+      ),
     },
     {
       title: 'Order Date',
@@ -354,7 +318,6 @@ const Orders: React.FC = () => {
           loading={loading}
           bordered
           scroll={{ x: 1400 }}
-          rowClassName={(record) => (record.delivery_boy_id === null ? 'highlight-row' : '')}
         />
       </div>
       <EditOrders

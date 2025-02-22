@@ -20,7 +20,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ visible, onClose, onSave, p
     const handleProductChange = (productId: number) => {
         const selectedProduct = products.find((product) => product.id === productId);
         if (selectedProduct) {
-            form.setFieldsValue({ price: selectedProduct.price }); // Auto-populate the price field
+            // Auto-select the first variant's price
+            const price = selectedProduct.variants?.[0]?.price || 0;
+            form.setFieldsValue({ price });
         }
     };
 
@@ -29,19 +31,19 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ visible, onClose, onSave, p
             await form.validateFields();
             const values = form.getFieldsValue();
 
-            // Exclude the price field from the payload
+            // Exclude the price field from the API payload
             const { price, ...payload } = values;
 
             setLoading(true);
 
-            // Make the API call without the price
-            const response = await ApiService.post(`/orders/${orderId}/item`, payload);
-            message.success('Item added successfully!');
+            // Make API call to save the item
+            await ApiService.post(`/orders/${orderId}/item`, payload);
 
-            // onSave(response);
-            onSave({ ...payload, price });
+            message.success('Item added successfully!');
+            onSave({ ...payload, price }); // Pass the saved item back to the parent
             onClose(); // Close the modal
         } catch (error) {
+            console.error('Failed to add item:', error);
             message.error('Failed to add item. Please try again.');
         } finally {
             setLoading(false);
@@ -65,7 +67,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ visible, onClose, onSave, p
                 >
                     <Select
                         placeholder="Select Product"
-                        onChange={handleProductChange} // Update price when product changes
+                        onChange={handleProductChange}
                     >
                         {products.map((product) => (
                             <Option key={product.id} value={product.id}>

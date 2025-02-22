@@ -4,8 +4,6 @@ import { Form, Input, Button, message, Spin, Switch, Select, Row, Col } from 'an
 import { ICustomer } from '../../../models/Customer';
 import ApiService from '../../../services/apiService';
 import { IDeliveryPartner } from '../../../models/DeliveryPartner';
-import { IArea } from '../../../models/Area';
-import { ISubarea } from '../../../models/Subarea';
 
 const { Option } = Select;
 
@@ -14,53 +12,45 @@ const Profile: React.FC = () => {
     const [form] = Form.useForm();
     const [customer, setCustomer] = useState<ICustomer | null>(null);
     const [loading, setLoading] = useState(true);
-    const [areas, setAreas] = useState<IArea[]>([]);
-    const [subareas, setSubareas] = useState<ISubarea[]>([]);
-    const [filteredSubareas, setFilteredSubareas] = useState<ISubarea[]>([]);
     const [deliveryPartners, setDeliveryPartners] = useState<IDeliveryPartner[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-    
-                const [areasData, subareasData, deliveryPartnersData] = await Promise.all([
-                    ApiService.get<IArea[]>('/areas'),
-                    ApiService.get<ISubarea[]>('/sub_areas'),
+
+                // Fetch customer data and delivery partners
+                const [customerData, deliveryPartnersData] = await Promise.all([
+                    ApiService.get<ICustomer>(`/customers/${id}`),
                     ApiService.get<IDeliveryPartner[]>('/delivery_boys'),
                 ]);
-    
-                setAreas(areasData);
-                setSubareas(subareasData);
-                setDeliveryPartners(deliveryPartnersData);
-    
-                // Now fetch the customer data
-                const customerData = await ApiService.get<ICustomer>(`/customers/${id}`);
+
                 setCustomer(customerData);
-                form.setFieldsValue(customerData);
-    
-                // Populate filteredSubareas based on the customer's area_id
-                if (customerData.area_id) {
-                    const filtered = subareasData.filter(
-                        (subarea) => (subarea.area_id).toString() === (customerData.area_id).toString()
-                    );
-                    setFilteredSubareas(filtered);
-                }
+                setDeliveryPartners(deliveryPartnersData);
+
+                // Set form values
+                form.setFieldsValue({
+                    ...customerData,
+                    referal_code: customerData.referal_code || '',
+                    credit_limit: customerData.credit_limit || '',
+                });
             } catch (error) {
-                message.error('Failed to fetch data');
+                message.error('Failed to fetch customer data');
             } finally {
                 setLoading(false);
             }
         };
-    
+
         fetchData();
     }, [id, form]);
 
+    // Toggle Active Status
     const handleToggleStatus = async () => {
         setLoading(true);
         try {
             await ApiService.patch<any>(`/customers/${id}/toggle_active_status`);
             message.success('Status updated');
+            setCustomer((prev) => prev ? { ...prev, is_active: !prev.is_active } : prev);
         } catch (error) {
             message.error('Failed to update status');
         } finally {
@@ -68,17 +58,17 @@ const Profile: React.FC = () => {
         }
     };
 
-    const handleAreaChange = (areaId: number) => {
-        // Filter subareas based on selected area_id
-        const filtered = subareas.filter((subarea) => (subarea.area_id).toString() === areaId.toString());
-        setFilteredSubareas(filtered);
-        form.setFieldsValue({ subarea_id: null });
-    };
-
-    const handleUpdate = async (values: ICustomer) => {
+    // Handle Form Submission
+    const handleUpdate = async (values: Partial<ICustomer>) => {
         setLoading(true);
         try {
-            const updatedData = { ...values, id: customer?.id };
+            const updatedData = {
+                ...values,
+                id: customer?.id,
+                area_id: customer?.area_id, // Ensure area_id is sent
+                subarea_id: customer?.subarea_id, // Ensure subarea_id is sent
+            };
+
             await ApiService.put('/customers', updatedData);
             message.success('Customer updated successfully');
         } catch (error) {
@@ -89,7 +79,6 @@ const Profile: React.FC = () => {
     };
 
     if (loading) return <Spin size="large" />;
-
     if (!customer) return <p>No customer data available</p>;
 
     return (
@@ -97,41 +86,41 @@ const Profile: React.FC = () => {
             form={form}
             layout="vertical"
             onFinish={handleUpdate}
-            style={{ padding: '0 20px' }}
+            style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}
         >
-            <Row gutter={16}>
-                <Col span={8}>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="ID" name="id">
                         <Input disabled value={`C-${customer.id?.toString().padStart(3, '0')}`} />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Please enter the name' }]}>
                         <Input />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
-                    <Form.Item label="Mobile" name="mobile" rules={[{ required: true, message: 'Please enter the mobile number' }]}>
+                <Col xs={24} sm={12} md={8}>
+                    <Form.Item label="Mobile" name="mobile">
                         <Input disabled />
                     </Form.Item>
                 </Col>
             </Row>
 
-            <Row gutter={16}>
-                <Col span={8}>
-                    <Form.Item label="Email" name="email" rules={[{ type: 'email', message: 'Enter a valid email' }]}>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8}>
+                    <Form.Item label="Email" name="email">
                         <Input disabled />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="App Version" name="app_version">
                         <Input disabled />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Status" name="is_active" valuePropName="checked">
                         <Switch
-                            onChange={() => handleToggleStatus()}
+                            onChange={handleToggleStatus}
                             checkedChildren="Active"
                             unCheckedChildren="Inactive"
                         />
@@ -139,48 +128,36 @@ const Profile: React.FC = () => {
                 </Col>
             </Row>
 
-            <Row gutter={16}>
-                <Col span={8}>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="State" name="state">
                         <Input />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="City" name="city">
                         <Input />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Pincode" name="pin">
                         <Input />
                     </Form.Item>
                 </Col>
             </Row>
 
-            <Row gutter={16}>
-                <Col span={8}>
-                    <Form.Item label="Area" name="area_id" rules={[{ required: true, message: 'Please select an area' }]}>
-                        <Select placeholder="Select Area" onChange={handleAreaChange}>
-                            {areas.map(area => (
-                                <Option key={area.id} value={area.id}>
-                                    {area.name}
-                                </Option>
-                            ))}
-                        </Select>
+            <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8}>
+                    <Form.Item label="Credit Limit" name="credit_limit">
+                        <Input />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
-                    <Form.Item label="Subarea" name="subarea_id" rules={[{ required: true, message: 'Please select a subarea' }]}>
-                        <Select placeholder="Select Subarea" disabled={!filteredSubareas.length}>
-                            {filteredSubareas.map(subarea => (
-                                <Option key={subarea.id} value={subarea.id}>
-                                    {subarea.name}
-                                </Option>
-                            ))}
-                        </Select>
+                <Col xs={24} sm={12} md={8}>
+                    <Form.Item label="Referral Code" name="referal_code">
+                        <Input />
                     </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8}>
                     <Form.Item label="Delivery Boy" name="delivery_boy_id">
                         <Select placeholder="Select Delivery Boy">
                             {deliveryPartners.map(partner => (
@@ -197,7 +174,7 @@ const Profile: React.FC = () => {
                 <Input.TextArea rows={3} />
             </Form.Item>
 
-            <Form.Item>
+            <Form.Item style={{ textAlign: 'center' }}>
                 <Button type="primary" htmlType="submit" loading={loading}>
                     Update
                 </Button>
