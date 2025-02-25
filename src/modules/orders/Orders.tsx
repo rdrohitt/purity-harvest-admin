@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tooltip, message, Tag, Row, Col, Popconfirm } from 'antd';
+import { Table, Tooltip, message, Tag, Row, Col, Popconfirm, Tabs } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
 import ApiService from '../../services/apiService';
-import { IOrder } from '../../models/Order';
+import { IOrder, IOrderItem } from '../../models/Order';
 import { IProduct } from '../../models/Product';
 import { ICustomer } from '../../models/Customer';
 import type { ColumnsType } from 'antd/es/table';
@@ -12,6 +12,7 @@ import CustomButton from '../../components/elements/CustomButton';
 import dayjs, { Dayjs } from 'dayjs';
 import EditOrders from './EditOrders';
 import AddOrders from './AddOrders';
+import { ITransaction } from '../../models/Transactions';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
@@ -24,6 +25,7 @@ const Orders: React.FC = () => {
   const [searchText, setSearchText] = useState<string>('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
   const [selectedOrderId, setSelectedOrderId] = useState<number>(0);
+  const [transactions, setTransactions] = useState<Record<string, string>>({});
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -64,10 +66,28 @@ const Orders: React.FC = () => {
     }
   };
 
+  // Fetch customers
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.get<ITransaction[]>('/payments');
+      const txnMap = response.reduce((acc, txn) => {
+        acc[txn.txn_id] = txn.status;
+        return acc;
+      }, {} as Record<string, string>);
+      setTransactions(txnMap);
+    } catch (error) {
+      message.error('Failed to fetch customers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchProducts();
     fetchCustomers();
+    fetchTransactions();
   }, []);
 
   // Get product variant details by product and variant IDs
@@ -181,7 +201,7 @@ const Orders: React.FC = () => {
             const variant = item.product_id && item.variant_id ? getProductVariantDetails(item.product_id, item.variant_id) : null;
             return (
               <Tag key={item.product_id} color="blue" style={{ marginBottom: '8px' }}>
-                {product?.name || 'Unknown Product'} - {variant?.name || 'Unknown Variant'} - Qty: {item.quantity}, Packaging: {item.packaging}, Price: ₹{(variant?.price || 0).toFixed(2)}
+                {product?.name || 'Unknown Product'} - {item.packaging}, ₹{(variant?.price || 0).toFixed(2)}
               </Tag>
             );
           })}
@@ -189,10 +209,48 @@ const Orders: React.FC = () => {
       ),
     },
     {
+      title: 'Variant Name',
+      key: 'variantName',
+      dataIndex: 'items',
+      width: 200,
+      render: (items: IOrderItem[]) =>
+        items.map((item) => {
+          const product = products.find((p) => p.id === item.product_id);
+          const variant = product?.variants.find((v) => v.id === item.variant_id);
+          return variant ? (
+            <Tag key={item.variant_id} color="green" style={{ marginBottom: '8px' }}>
+              {variant.name}, Qty - {item.quantity}
+            </Tag>
+          ) : (
+            <Tag key={item.variant_id} color="red" style={{ marginBottom: '8px' }}>
+              N/A
+            </Tag>
+          );
+        }),
+    },
+    {
       title: 'Order Amount',
       key: 'amount',
       dataIndex: 'amount',
       width: 130,
+    },
+    {
+      title: 'Payment Method',
+      dataIndex: 'is_cod',
+      key: 'is_cod',
+      width: 150,
+      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Online'),
+    },
+    {
+      title: 'Payment Status',
+      dataIndex: 'txn_id',
+      key: 'status',
+      width: 150,
+      render: (txn_id: string) => (
+        <Tag color={transactions[txn_id] === 'success' ? 'green' : 'red'}>
+          {transactions[txn_id] ? transactions[txn_id].toUpperCase() : 'N/A'}
+        </Tag>
+      ),
     },
     {
       title: 'Status',
@@ -231,16 +289,16 @@ const Orders: React.FC = () => {
             iconStatus === 'confirmed'
               ? '#007bff' // Blue for confirmed
               : iconStatus === 'delivered'
-              ? '#28a745' // Green for delivered
-              : iconStatus === 'cancelled'
-              ? '#dc3545' // Red for cancelled
-              : iconStatus === 'rejected'
-              ? '#ffc107' // Yellow for rejected
-              : '#6c757d', // Default color
+                ? '#28a745' // Green for delivered
+                : iconStatus === 'cancelled'
+                  ? '#dc3545' // Red for cancelled
+                  : iconStatus === 'rejected'
+                    ? '#ffc107' // Yellow for rejected
+                    : '#6c757d', // Default color
           cursor: 'pointer',
           fontSize: '18px',
         });
-    
+
         const availableIcons = [
           record.status !== 'delivered' && (
             <Popconfirm
@@ -282,11 +340,25 @@ const Orders: React.FC = () => {
             </Popconfirm>
           ),
         ];
-    
+
         return <div style={{ display: 'flex', gap: '10px' }}>{availableIcons.filter(Boolean)}</div>;
       },
     }
   ];
+
+  const milkOrders = orders.filter(order =>
+    order.items.some(item => {
+      const product = products.find(p => p.id === item.product_id);
+      return product && !product.name.toLowerCase().includes('ghee');
+    })
+  );
+
+  const gheeOrders = orders.filter(order =>
+    order.items.some(item => {
+      const product = products.find(p => p.id === item.product_id);
+      return product && product.name.toLowerCase().includes('ghee');
+    })
+  );
 
   return (
     <div>
@@ -310,15 +382,30 @@ const Orders: React.FC = () => {
         </Row>
       </div>
       <div className='tab-container'>
-        <Table
-          columns={columns}
-          dataSource={orders}
-          rowKey="id"
-          pagination={{ pageSize: 50 }}
-          loading={loading}
-          bordered
-          scroll={{ x: 1400 }}
-        />
+        <Tabs defaultActiveKey="1" type="card">
+          <Tabs.TabPane tab="Milk Orders" key="1">
+            <Table
+              columns={columns}
+              dataSource={milkOrders}
+              rowKey="id"
+              pagination={{ pageSize: 50 }}
+              loading={loading}
+              bordered
+              scroll={{ x: 1800 }}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Ghee Orders" key="2">
+            <Table
+              columns={columns}
+              dataSource={gheeOrders}
+              rowKey="id"
+              pagination={{ pageSize: 50 }}
+              loading={loading}
+              bordered
+              scroll={{ x: 1800 }}
+            />
+          </Tabs.TabPane>
+        </Tabs>
       </div>
       <EditOrders
         visible={isEditModalVisible}
