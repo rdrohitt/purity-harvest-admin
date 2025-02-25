@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tooltip, message, Tag, Row, Col, Popconfirm, Tabs } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined, PlusOutlined, StopOutlined } from '@ant-design/icons';
 import ApiService from '../../services/apiService';
 import { IOrder, IOrderItem } from '../../models/Order';
 import { IProduct } from '../../models/Product';
@@ -121,7 +121,16 @@ const Orders: React.FC = () => {
           {customer ? customer?.name : 'Unknown Customer'}
         </span>
         <div style={{ fontSize: "12px", color: "gray" }}>
-          {customer?.mobile}
+            <a href={`tel:${customer?.mobile}`}>{customer?.mobile}</a>
+            <Tooltip title="Copy">
+            <CopyOutlined
+              style={{ marginLeft: 8, cursor: 'pointer' }}
+              onClick={() => {
+              navigator.clipboard.writeText(customer?.mobile || '');
+              message.success('Copied to clipboard');
+              }}
+            />
+            </Tooltip> | {customer?.state} | {customer?.city} | {customer?.pin || 'NA'} | {customer?.address}
         </div>
       </div>
     )
@@ -212,7 +221,7 @@ const Orders: React.FC = () => {
       dataIndex: 'customer_id',
       key: 'customer_name',
       fixed: 'left',
-      width: 180,
+      width: 250,
       render: (customerId) => getCustomerName(customerId),
     },
     {
@@ -369,7 +378,7 @@ const Orders: React.FC = () => {
       title: 'Customer Name',
       dataIndex: 'customer_id',
       key: 'customer_name',
-      width: 180,
+      width: 250,
       render: (customerId) => getCustomerName(customerId),
     },
     {

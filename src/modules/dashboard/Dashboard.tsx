@@ -47,11 +47,12 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const customerStats = [
-    { title: 'Total Customers', count: dashboardStats.total_customers, icon: <UserOutlined className="stat-icon total-customers-icon" /> },
-    { title: 'Active Subscriptions', count: dashboardStats.active_subscriptions, icon: <CheckCircleOutlined className="stat-icon active-subscriptions-icon" /> },
-    { title: 'Inactive Subscriptions', count: dashboardStats.inactive_subscriptions, icon: <CloseCircleOutlined className="stat-icon inactive-subscriptions-icon" /> },
-    { title: 'Trials', count: dashboardStats.total_trials, icon: <ExperimentOutlined className="stat-icon trial-given-icon" /> },
-    { title: 'Enquiries', count: dashboardStats.total_enquiries, icon: <QuestionCircleOutlined className="stat-icon without-subscription-icon" /> },
+    { title: 'Total Customers', count: dashboardStats.total_customers, icon: <UserOutlined className="stat-icon total-customers-icon" />, path: '/customers/all' },
+    { title: 'Total Orders', count: dashboardStats.total_orders, icon: <ShoppingCartOutlined className="stat-icon total-orders-icon" />, path: '/orders/one-time-order'},
+    { title: 'Trials', count: dashboardStats.total_trials, icon: <ExperimentOutlined className="stat-icon trial-given-icon" /> ,path: '/orders/one-time-order'},
+    { title: 'Active Subscriptions', count: dashboardStats.active_subscriptions, icon: <CheckCircleOutlined className="stat-icon active-subscriptions-icon" />, path: '' },
+    { title: 'Inactive Subscriptions', count: dashboardStats.inactive_subscriptions, icon: <CloseCircleOutlined className="stat-icon inactive-subscriptions-icon" />, path: '' },
+    { title: 'Enquiries', count: dashboardStats.total_enquiries, icon: <QuestionCircleOutlined className="stat-icon without-subscription-icon" />, path: '' },
   ];
 
   const orderStats = [
@@ -79,10 +80,10 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard">
       <Card title="Customers" bordered={false}>
-        <Row gutter={[20, 20]} justify="space-between">
+        <Row gutter={[20, 20]}>
           {customerStats.map((stat, index) => (
             <Col key={index} xs={24} sm={12} md={8} lg={6}>
-              <Card className="stat-card" style={{ cursor: 'pointer' }} onClick={() => window.location.href = '/customers/all'}>
+              <Card className="stat-card" style={{ cursor: 'pointer' }} onClick={() => window.location.href = stat.path}>
                 <div className="stat-content">
                   {stat.icon}
                   <div className="stat-details">
