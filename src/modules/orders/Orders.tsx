@@ -115,7 +115,16 @@ const Orders: React.FC = () => {
   // Get customer name by ID
   const getCustomerName = (customerId: number) => {
     const customer = customers.find((c) => c.id === customerId);
-    return customer ? customer.name : 'Unknown Customer';
+    return (
+      <div>
+        <span>
+          {customer ? customer?.name : 'Unknown Customer'}
+        </span>
+        <div style={{ fontSize: "12px", color: "gray" }}>
+          {customer?.mobile}
+        </div>
+      </div>
+    )
   };
 
   const handleAddModalClose = () => {
