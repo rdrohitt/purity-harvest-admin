@@ -13,6 +13,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import EditOrders from './EditOrders';
 import AddOrders from './AddOrders';
 import { ITransaction } from '../../models/Transactions';
+import { ITrial } from '../../models/Trials';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
@@ -26,6 +27,7 @@ const Orders: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
   const [selectedOrderId, setSelectedOrderId] = useState<number>(0);
   const [transactions, setTransactions] = useState<Record<string, string>>({});
+  const [trials, setTrials] = useState<ITrial[]>([]);
 
   // Fetch orders
   const fetchOrders = async () => {
@@ -35,6 +37,19 @@ const Orders: React.FC = () => {
       setOrders(response);
     } catch (error) {
       message.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch trials
+  const fetchTrials = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.get<ITrial[]>('/trials');
+      setTrials(response);
+    } catch (error) {
+      message.error('Failed to fetch trials');
     } finally {
       setLoading(false);
     }
@@ -66,7 +81,7 @@ const Orders: React.FC = () => {
     }
   };
 
-  // Fetch customers
+  // Fetch transactions
   const fetchTransactions = async () => {
     try {
       setLoading(true);
@@ -77,7 +92,7 @@ const Orders: React.FC = () => {
       }, {} as Record<string, string>);
       setTransactions(txnMap);
     } catch (error) {
-      message.error('Failed to fetch customers');
+      message.error('Failed to fetch transactions');
     } finally {
       setLoading(false);
     }
@@ -88,6 +103,7 @@ const Orders: React.FC = () => {
     fetchProducts();
     fetchCustomers();
     fetchTransactions();
+    fetchTrials();
   }, []);
 
   // Get product variant details by product and variant IDs
@@ -194,39 +210,25 @@ const Orders: React.FC = () => {
       title: 'Products',
       dataIndex: 'items',
       key: 'items',
+      width: 300,
       render: (_, record) => (
         <div>
           {(record.items || []).map((item) => {
             const product = products.find((p) => p.id === item.product_id); // Get the product details
             const variant = item.product_id && item.variant_id ? getProductVariantDetails(item.product_id, item.variant_id) : null;
             return (
-              <Tag key={item.product_id} color="blue" style={{ marginBottom: '8px' }}>
-                {product?.name || 'Unknown Product'} - {item.packaging}, ₹{(variant?.price || 0).toFixed(2)}
-              </Tag>
+              <div key={item.product_id}>
+                <span className="link">
+                  {product?.name || 'Unknown Product'}
+                </span>
+                <div style={{ fontSize: "12px", color: "gray" }}>
+                  {variant?.name} | {item.packaging} | Qty - {item.quantity} | Price - ₹{(variant?.price || 0).toFixed(2)}
+                </div>
+              </div>
             );
           })}
         </div>
       ),
-    },
-    {
-      title: 'Variant Name',
-      key: 'variantName',
-      dataIndex: 'items',
-      width: 200,
-      render: (items: IOrderItem[]) =>
-        items.map((item) => {
-          const product = products.find((p) => p.id === item.product_id);
-          const variant = product?.variants.find((v) => v.id === item.variant_id);
-          return variant ? (
-            <Tag key={item.variant_id} color="green" style={{ marginBottom: '8px' }}>
-              {variant.name}, Qty - {item.quantity}
-            </Tag>
-          ) : (
-            <Tag key={item.variant_id} color="red" style={{ marginBottom: '8px' }}>
-              N/A
-            </Tag>
-          );
-        }),
     },
     {
       title: 'Order Amount',
@@ -346,6 +348,101 @@ const Orders: React.FC = () => {
     }
   ];
 
+  const trialColumns: ColumnsType<ITrial> = [
+    {
+      title: 'Trial ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 100,
+      render: (id) => `Trial-${id}`,
+    },
+    {
+      title: 'Customer Name',
+      dataIndex: 'customer_id',
+      key: 'customer_name',
+      width: 180,
+      render: (customerId) => getCustomerName(customerId),
+    },
+    {
+      title: 'Product',
+      key: 'product',
+      dataIndex: 'product_id',
+      width: 300,
+      render: (productId: number, record: ITrial) => {
+        const product = products.find((p) => p.id === productId);
+        const variant = product?.variants.find((v) => v.id === record.variant_id);
+        const qty = record.quantity;
+        const packaging = record.packaging
+
+        return product ? (
+          <div key={record.product_id}>
+            <span className="link">
+              {product?.name || 'Unknown Product'}
+            </span>
+            <div style={{ fontSize: "12px", color: "gray" }}>
+              {variant?.name} | {packaging} | Qty - {qty} | Price - ₹{(variant?.price || 0).toFixed(2)}
+            </div>
+          </div>
+        ) : (
+          <Tag color="red" style={{ marginBottom: '8px' }}>
+            N/A
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'Order Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      width: 130,
+    },
+    {
+      title: 'Payment Method',
+      dataIndex: 'is_cod',
+      key: 'is_cod',
+      width: 150,
+      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Online'),
+    },
+    {
+      title: 'Payment Status',
+      dataIndex: 'txn_id',
+      key: 'status',
+      width: 150,
+      render: (txn_id: string) => (
+        <Tag color={transactions[txn_id] === 'success' ? 'green' : 'red'}>
+          {transactions[txn_id] ? transactions[txn_id].toUpperCase() : 'N/A'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Start Date',
+      dataIndex: 'start_date',
+      key: 'start_date',
+      width: 150,
+      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
+    },
+    {
+      title: 'End Date',
+      dataIndex: 'end_date',
+      key: 'end_date',
+      width: 150,
+      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status) => (
+        <Tooltip title={`Status: ${status}`}>
+          <Tag color={status === 'completed' ? 'green' : 'blue'}>
+            {status.toUpperCase()}
+          </Tag>
+        </Tooltip>
+      ),
+    },
+  ];
+
   const milkOrders = orders.filter(order =>
     order.items.some(item => {
       const product = products.find(p => p.id === item.product_id);
@@ -383,7 +480,18 @@ const Orders: React.FC = () => {
       </div>
       <div className='tab-container'>
         <Tabs defaultActiveKey="1" type="card">
-          <Tabs.TabPane tab="Milk Orders" key="1">
+          <Tabs.TabPane tab="Trials" key="1">
+            <Table
+              columns={trialColumns}
+              dataSource={trials}
+              rowKey="id"
+              pagination={{ pageSize: 50 }}
+              loading={loading}
+              bordered
+              scroll={{ x: 1800 }}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Milk Orders" key="2">
             <Table
               columns={columns}
               dataSource={milkOrders}
@@ -394,7 +502,7 @@ const Orders: React.FC = () => {
               scroll={{ x: 1800 }}
             />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Ghee Orders" key="2">
+          <Tabs.TabPane tab="Ghee Orders" key="3">
             <Table
               columns={columns}
               dataSource={gheeOrders}
