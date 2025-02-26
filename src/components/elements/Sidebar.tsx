@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 
@@ -13,6 +13,21 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> =
   const [isDeliverySubmenuOpen, setIsDeliverySubmenuOpen] = useState(false);
 
   const location = useLocation();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768 && isSidebarOpen) {
+        toggleSidebar();
+      }
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [location.pathname]);
 
   // Refine active checks to be exact
   const isCustomersActive = location.pathname.startsWith('/customers');
