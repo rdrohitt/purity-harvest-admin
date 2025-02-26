@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import logo from '../../assets/images/logo.jpeg';
+import logo from '../../assets/images/logo.png';
 
 const Sidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> = ({ isSidebarOpen, toggleSidebar }) => {
   const [isCustomersSubmenuOpen, setIsCustomersSubmenuOpen] = useState(false);

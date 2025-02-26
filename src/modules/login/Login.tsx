@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Checkbox } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/apiService';
-import logo from '../../assets/images/logo.jpeg';
+import logo from '../../assets/images/logo.png';
 import { ILogin } from '../../models/Login';
 import './Login.scss';
 

@@ -121,16 +121,16 @@ const Orders: React.FC = () => {
           {customer ? customer?.name : 'Unknown Customer'}
         </span>
         <div style={{ fontSize: "12px", color: "gray" }}>
-            <a href={`tel:${customer?.mobile}`}>{customer?.mobile}</a>
-            <Tooltip title="Copy">
+          <a href={`tel:${customer?.mobile}`}>{customer?.mobile}</a>
+          <Tooltip title="Copy">
             <CopyOutlined
               style={{ marginLeft: 8, cursor: 'pointer' }}
               onClick={() => {
-              navigator.clipboard.writeText(customer?.mobile || '');
-              message.success('Copied to clipboard');
+                navigator.clipboard.writeText(customer?.mobile || '');
+                message.success('Copied to clipboard');
               }}
             />
-            </Tooltip> | {customer?.state} | {customer?.city} | {customer?.pin || 'NA'} | {customer?.address}
+          </Tooltip> | {customer?.state} | {customer?.city} | {customer?.pin || 'NA'} | {customer?.address}
         </div>
       </div>
     )

@@ -383,7 +383,7 @@ const AllCustomer: React.FC = () => {
   return (
     <div>
       <h5>All Customers</h5>
-      <Row gutter={16} className="filter-container">
+      <Row gutter={16} className="filter-container" style={{marginLeft: '0px', marginRight: '0px'}}>
         <Col span={6}>
           <CustomInput
             placeholder="Search by name"

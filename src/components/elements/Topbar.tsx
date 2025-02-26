@@ -53,7 +53,7 @@ const styles = {
     justifyContent: 'flex-end',
     alignItems: 'center',
     padding: '0 20px',
-    backgroundColor: '#f1f1f1',
+    backgroundColor: '#f0fff4',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
     height: '60px',
     // zIndex: '-1'

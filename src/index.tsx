@@ -16,19 +16,19 @@ const fallbackPath = '/login';
 
 root.render(
   <BrowserRouter>
-  <Routes>
-    <Route path="/login" element={<Login />} />
-    <Route path="/" element={<Navigate to="/login" />} />
-    <Route
-      path="/*"
-      element={
-        <RestrictedWrapper fallbackPath={fallbackPath}>
-          <App />
-        </RestrictedWrapper>
-      }
-    />
-  </Routes>
-</BrowserRouter>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route
+        path="/*"
+        element={
+          <RestrictedWrapper fallbackPath={fallbackPath}>
+            <App />
+          </RestrictedWrapper>
+        }
+      />
+    </Routes>
+  </BrowserRouter>
 );
 
 reportWebVitals();

@@ -7,10 +7,9 @@
   width: 250px;
   height: 100vh;
   position: fixed;
+  background-color: #f0fff4;
   top: 0;
   left: 0;
-  background-color: $sidebar-bg-color;
-  color: $sidebar-text-color;
   padding: 20px 15px;
   display: flex;
   flex-direction: column;
@@ -47,13 +46,10 @@
 
   .sidebar-header {
     text-align: center;
-    margin-bottom: 2rem;
 
     .logo-container {
       width: 120px;
       height: 120px;
-      border: 5px dotted $sidebar-active-bg-color;  // The color of the circle
-      border-radius: 50%;  // Makes the container circular
       display: flex;
       align-items: center;
       justify-content: center;
@@ -61,9 +57,8 @@
     }
 
     .logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;  // Makes the image itself circular
+      width: 130px;
+      height: 130px;
     }
   }
 
@@ -76,7 +71,7 @@
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 
     &:hover {
-      background-color: $sidebar-active-bg-color;
+      background: $sidebar-active-bg-color;
       color: $sidebar-active-text-color;
       border-radius: 0.80rem;
     }
@@ -95,7 +90,7 @@
 
   // Active parent styling (Users when All Users or Add User is selected)
   .active-parent {
-    background-color: $sidebar-active-bg-color;
+    background: $sidebar-active-bg-color;
     color: $sidebar-active-text-color;
     font-weight: $font-weight-bold;
     border-radius: 0.80rem;
@@ -123,7 +118,7 @@
 
     .nav-link.active-submenu {
       background-color: transparent;
-      color: $sidebar-active-bg-color; 
+      color: #1f8f2e; 
       font-weight: $font-weight-bold;
     }
   }
@@ -135,6 +130,7 @@
       transform: rotate(90deg);
       margin-left: auto;
       transition: transform 0.3s;
+      font-size: 12px;
     }
 
     .fa-chevron-down {

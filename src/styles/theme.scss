@@ -1,9 +1,9 @@
 // Theme Colors
 $sidebar-bg-color: #171f3e;                   // White background for the sidebar
-$sidebar-text-color: white;               // Dark grey for sidebar text
+$sidebar-text-color: #364152;               // Dark grey for sidebar text
 $sidebar-hover-bg-color: #f0f0f0;           // Light grey for hover state
-$sidebar-active-bg-color: #435ebe;          // Dark blue for active state
-$sidebar-active-text-color: white;          // White text for active state
+$sidebar-active-bg-color: linear-gradient(135deg, #f9fbe7 10%, #d4e9d8 100%);          // Dark blue for active state
+$sidebar-active-text-color: #1f8f2e;          // White text for active state
 $main-content-bg-color: #f2f7ff;
 $submenu-bg-color: #f9f9f9;                 // Light background for submenu
 $submenu-hover-bg-color: #e0e0e0;           // Hover color for submenu

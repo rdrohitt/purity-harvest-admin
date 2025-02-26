@@ -38,13 +38,13 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
 
         const items = orderData.items
           ? orderData.items.map((item) => {
-              const product = productData.find((product) => product.id === item.product_id);
-              const variant = product?.variants.find((v) => v.id === item.variant_id);
-              return {
-                ...item,
-                price: variant?.price || 0,
-              };
-            })
+            const product = productData.find((product) => product.id === item.product_id);
+            const variant = product?.variants.find((v) => v.id === item.variant_id);
+            return {
+              ...item,
+              price: variant?.price || 0,
+            };
+          })
           : [];
         setModalItems(items);
       });
@@ -151,11 +151,11 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
         prev.map((item, idx) =>
           idx === index
             ? {
-                ...item,
-                product_id: productId,
-                variant_id: variantId,
-                price: selectedVariant.price || 0,
-              }
+              ...item,
+              product_id: productId,
+              variant_id: variantId,
+              price: selectedVariant.price || 0,
+            }
             : item
         )
       );
@@ -306,6 +306,30 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
         />
 
         <div className="bill-summary">
+          <h3 className="bill-summary-heading">Bill Summary</h3>
+          <Row gutter={16} className="bill-summary-details">
+            <Col span={12}>
+              <p>Subtotal:</p>
+              <p>Discount:</p>
+              <p>Coupon Applied:</p>
+              <p>Delivery Charges:</p>
+              <div className="dotted-line"></div>
+              <p className="total">Total:</p>
+            </Col>
+            <Col span={12} className="bill-summary-amounts">
+              <p>₹ {calculateSubtotal().toFixed(2)}</p>
+              <p className="green">₹ {(modalData.discount ?? 0).toFixed(2)}</p>
+              <p className="green">
+                ₹{calculateCouponDiscount().toFixed(2)}
+              </p>
+              <p>₹ {(modalData.delivery_charges ?? 0).toFixed(2)}</p>
+              <div className="dotted-line"></div>
+              <p className="total">₹ {calculateGrandTotal().toFixed(2)}</p>
+            </Col>
+          </Row>
+        </div>
+        {/* 
+        <div className="bill-summary">
           <h3>Bill Summary</h3>
           <Row gutter={16}>
             <Col span={12}>
@@ -323,7 +347,7 @@ const EditOrders: React.FC<OrderModalProps> = ({ visible, orderData, onClose, on
               <p>₹{calculateGrandTotal().toFixed(2)}</p>
             </Col>
           </Row>
-        </div>
+        </div> */}
       </Form>
     </Modal>
   );
