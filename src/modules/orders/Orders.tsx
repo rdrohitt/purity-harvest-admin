@@ -164,12 +164,7 @@ const Orders: React.FC = () => {
         return;
       }
 
-      const payload = {
-        ...order,
-        status,
-      };
-
-      await ApiService.put('/orders', payload);
+      await ApiService.put(`/orders/${id}/status?status=${status}`);
       message.success(`Order status updated to ${status}`);
       fetchOrders(); // Refresh the orders after updating
     } catch (error) {
@@ -379,7 +374,7 @@ const Orders: React.FC = () => {
       dataIndex: 'customer_id',
       key: 'customer_name',
       width: 250,
-      render: (customerId) => getCustomerName(customerId),
+      render: (customerId, record) => getCustomerName(customerId),
     },
     {
       title: 'Product',
@@ -518,6 +513,12 @@ const Orders: React.FC = () => {
               loading={loading}
               bordered
               scroll={{ x: 1800 }}
+              rowClassName={(record) => {
+                if (record.status === 'delivered') return 'row-delivered';
+                if (record.status === 'cancelled') return 'row-cancelled';
+                if (record.status === 'rejected') return 'row-rejected';
+                return '';
+              }}
             />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Ghee Orders" key="3">
@@ -529,6 +530,12 @@ const Orders: React.FC = () => {
               loading={loading}
               bordered
               scroll={{ x: 1800 }}
+              rowClassName={(record) => {
+                if (record.status === 'delivered') return 'row-delivered';
+                if (record.status === 'cancelled') return 'row-cancelled';
+                if (record.status === 'rejected') return 'row-rejected';
+                return '';
+              }}
             />
           </Tabs.TabPane>
         </Tabs>

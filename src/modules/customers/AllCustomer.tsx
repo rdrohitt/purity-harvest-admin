@@ -399,12 +399,15 @@ const AllCustomer: React.FC = () => {
         </Col>
         <Col span={12} style={{ textAlign: 'right' }}>
           <CustomButton
+          className='primary-button'
             text="Add Customer"
             icon={<PlusOutlined />}
             onClick={() => setIsModalVisible(true)}
           />
           <CustomButton
             text="Export"
+            style={{marginLeft: '10px'}}
+            className='primary-button'
             icon={<DownloadOutlined />}
             onClick={() => message.success('Export triggered')}
           />

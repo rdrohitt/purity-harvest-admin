@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Table, message } from 'antd';
+import { Col, Row, Table, Tag, message } from 'antd';
 import ApiService from '../../services/apiService';
 import { ITrial } from '../../models/Trials';
 import { IProduct } from '../../models/Product';
 import dayjs from 'dayjs';
+import { ITransaction } from '../../models/Transactions';
+import CustomInput from '../../components/elements/CustomInput';
+import { CustomButton } from '../../components/elements';
+import { PlusOutlined } from "@ant-design/icons";
 
 const Trials: React.FC = () => {
     const [trials, setTrials] = useState<ITrial[]>([]);
     const [productMap, setProductMap] = useState<{ [key: string]: { name: string; variants: { [key: string]: string } } }>({});
-    const [customers, setCustomers] = useState<{ [key: string]: string }>({});
     const [loading, setLoading] = useState<boolean>(false);
+    const [transactions, setTransactions] = useState<Record<string, string>>({});
+    const [searchText, setSearchText] = useState<string>("");
 
     // Fetch trials
     const fetchTrials = async () => {
@@ -47,32 +52,37 @@ const Trials: React.FC = () => {
         }
     };
 
-    // Fetch customers
-    const fetchCustomers = async () => {
+    // Fetch transactions
+    const fetchTransactions = async () => {
         try {
-            const response = await ApiService.get<{ id: string; name: string }[]>('/customers');
-            const customerMap = response.reduce((acc, customer) => {
-                acc[customer.id] = customer.name;
+            setLoading(true);
+            const response = await ApiService.get<ITransaction[]>('/payments');
+            const txnMap = response.reduce((acc, txn) => {
+                acc[txn.txn_id] = txn.status;
                 return acc;
-            }, {} as { [key: string]: string });
-            setCustomers(customerMap);
+            }, {} as Record<string, string>);
+            setTransactions(txnMap);
         } catch (error) {
-            message.error('Failed to load customers');
+            message.error('Failed to fetch transactions');
+        } finally {
+            setLoading(false);
         }
     };
+
 
     useEffect(() => {
         fetchTrials();
         fetchProducts();
-        fetchCustomers();
+        fetchTransactions();
     }, []);
 
     const columns = [
         {
-            title: 'Customer',
-            dataIndex: 'customer_id',
-            key: 'customer_id',
-            render: (customer_id: string) => customers[customer_id] || 'Unknown',
+            title: 'Trial ID',
+            dataIndex: 'id',
+            key: 'id',
+            width: 100,
+            render: (id: number) => `Trial-${id}`,
         },
         {
             title: 'Product',
@@ -81,27 +91,39 @@ const Trials: React.FC = () => {
             render: (_: any, record: ITrial) => {
                 const product = productMap[record.product_id];
                 const variant = product?.variants[record.variant_id];
-                return product
-                    ? `${product.name} - ${variant || 'Unknown'}`
-                    : 'Unknown Product';
+                return product && (
+                    <div key={record.product_id}>
+                        <span className="link">
+                            {product?.name || 'Unknown Product'}
+                        </span>
+                        <div style={{ fontSize: "12px", color: "gray" }}>
+                            {variant} | {record.packaging} | Qty - {record.quantity}
+                        </div>
+                    </div>
+                )
             },
         },
         {
-            title: 'Quantity',
-            dataIndex: 'quantity',
-            key: 'quantity',
-        },
-        {
-            title: 'Packaging',
-            dataIndex: 'packaging',
-            key: 'packaging',
-            render: (packaging: 'packet' | 'bottle') => packaging.charAt(0).toUpperCase() + packaging.slice(1),
+            title: 'Order Amount',
+            dataIndex: 'amount',
+            key: 'amount',
         },
         {
             title: 'Payment',
             dataIndex: 'is_cod',
             key: 'is_cod',
             render: (is_cod: boolean) => (is_cod ? 'COD' : 'Paid'),
+        },
+        {
+            title: 'Payment Status',
+            dataIndex: 'txn_id',
+            key: 'status',
+            width: 150,
+            render: (txn_id: string) => (
+                <Tag color={transactions[txn_id] === 'success' ? 'green' : 'red'}>
+                    {transactions[txn_id] ? transactions[txn_id].toUpperCase() : 'N/A'}
+                </Tag>
+            ),
         },
         {
             title: 'Start Date',
@@ -132,8 +154,30 @@ const Trials: React.FC = () => {
     ];
 
     return (
-        <div>
+        <>
             <h5 className="page-heading">Trials</h5>
+            <div className="filter-container">
+                <Row gutter={16}>
+                    <Col span={12}>
+                        <CustomInput
+                            placeholder="Search by Id"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
+                    </Col>
+                    <Col span={12} style={{ textAlign: "right" }}>
+                        <CustomButton
+                            text="Add Trial"
+                            className="primary-button"
+                            icon={<PlusOutlined />}
+                        //   onClick={() => {
+                        //     setIsEdit(false);
+                        //     setIsModalVisible(true);
+                        //   }}
+                        />
+                    </Col>
+                </Row>
+            </div>
             <div className="tab-container">
                 <Table
                     dataSource={trials}
@@ -144,7 +188,7 @@ const Trials: React.FC = () => {
                     pagination={{ pageSize: 10 }}
                 />
             </div>
-        </div>
+        </>
     );
 };
 

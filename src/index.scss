@@ -338,3 +338,24 @@ main {
     }
   }
 }
+
+.status-container {
+  display: flex;
+
+  .ant-tag{
+    margin-left: 20px;
+  }
+}
+
+
+.row-delivered{
+  background-color: #f0fff4;
+}
+
+.row-cancelled {
+  background-color: #ffe7e0;
+}
+
+.row-rejected {
+  background-color: #fedede;
+}
