@@ -9,7 +9,7 @@ import {
   ShoppingCartOutlined,
   CarOutlined,
 } from '@ant-design/icons';
-import ApiService, { BASE_URL } from '../../services/apiService';
+import ApiService from '../../services/apiService';
 import './Dashboard.scss';
 import { DashboardStats } from '../../models/DashboardStats';
 
