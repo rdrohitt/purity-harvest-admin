@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Table, Row, Col, Tag, Switch, message } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { Table, Row, Col, Tag, Switch, message, Tooltip } from "antd";
+import { CopyOutlined, PlusOutlined } from "@ant-design/icons";
 import { ISubscription } from "../../models/Subscription";
 import { ICustomer } from "../../models/Customer";
 import { IProduct, IVariant } from "../../models/Product";
@@ -21,20 +21,20 @@ const Subscribers: React.FC = () => {
   const [editingData, setEditingData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
       const [subRes, custRes, prodRes] = await Promise.all([
         ApiService.get<ISubscription[]>("/subscriptions"),
-        ApiService.get<ICustomer[]>("/customers"),
+        ApiService.get<ICustomer[]>("/customers?filter=active_Subscribers"),
         ApiService.get<IProduct[]>("/products"),
       ]);
 
-      setSubscriptions(subRes);
+      const filteredSubscriptions = subRes.filter(sub =>
+        custRes.some(cust => cust.id === sub.customer_id)
+      );
+
+      setSubscriptions(filteredSubscriptions);
       setCustomers(custRes);
       setProducts(prodRes);
     } catch (error) {
@@ -44,10 +44,31 @@ const Subscribers: React.FC = () => {
     }
   };
 
-  // Get customer name and mobile
-  const getCustomerName = (id: number): string => {
-    const customer = customers.find((c) => c.id === id);
-    return customer ? `${customer.name} (${customer.mobile || "No Mobile"})` : "Unknown";
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const getCustomerName = (customerId: number) => {
+    const customer = customers.find((c) => c.id === customerId);
+    return (
+      <div>
+        <span>
+          {customer ? customer?.name : 'Unknown Customer'}
+        </span>
+        <div style={{ fontSize: "12px", color: "gray" }}>
+          <a href={`tel:${customer?.mobile}`}>{customer?.mobile}</a>
+          <Tooltip title="Copy">
+            <CopyOutlined
+              style={{ marginLeft: 8, cursor: 'pointer' }}
+              onClick={() => {
+                navigator.clipboard.writeText(customer?.mobile || '');
+                message.success('Copied to clipboard');
+              }}
+            />
+          </Tooltip> | {customer?.state} | {customer?.city} | {customer?.pin || 'NA'} | {customer?.address}
+        </div>
+      </div>
+    )
   };
 
   // Get product variant details
@@ -115,19 +136,19 @@ const Subscribers: React.FC = () => {
   };
 
   // Group subscriptions by customer
-  const groupedSubscriptions: Record<string, ISubscription[]> = subscriptions.reduce(
-    (acc: Record<string, ISubscription[]>, sub) => {
-      const customer = getCustomerName(sub.customer_id);
-      if (!acc[customer]) acc[customer] = [];
-      acc[customer].push(sub);
+  const groupedSubscriptions: Record<number, ISubscription[]> = subscriptions.reduce(
+    (acc: Record<number, ISubscription[]>, sub) => {
+      const customerId = sub.customer_id;
+      if (!acc[customerId]) acc[customerId] = [];
+      acc[customerId].push(sub);
       return acc;
     },
     {}
   );
 
-  const tableData = Object.keys(groupedSubscriptions).map((customer) => ({
-    customer,
-    subscriptions: groupedSubscriptions[customer],
+  const tableData = Object.keys(groupedSubscriptions).map((customerId) => ({
+    customer: getCustomerName(Number(customerId)),
+    subscriptions: groupedSubscriptions[Number(customerId)],
   }));
 
   // Nested columns
@@ -198,7 +219,7 @@ const Subscribers: React.FC = () => {
 
   return (
     <>
-      <h5 className="page-heading">Subscribed Customers</h5>
+      <h5 className="page-heading">Active Subscribers</h5>
 
       {/* Filter Section */}
       <div className="filter-container">
@@ -227,13 +248,13 @@ const Subscribers: React.FC = () => {
       {/* Subscription Table */}
       <Table
         columns={[
-          { title: "Customer", dataIndex: "customer", key: "customer" },
+          { title: "Customer", dataIndex: "customer", key: "customer", width: 200 },
           {
             title: "Subscriptions",
             key: "subscriptions",
             render: (_, { subscriptions }) => (
               <div className="subscription-expanded-row ">
-              <Table columns={nestedColumns} dataSource={subscriptions} pagination={false} bordered />
+                <Table columns={nestedColumns} dataSource={subscriptions} pagination={false} bordered />
               </div>
             ),
           },

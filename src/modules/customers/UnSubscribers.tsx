@@ -1,274 +1,272 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Row, Col, Select, message, Switch } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import dayjs, { Dayjs } from 'dayjs';
-import { useNavigate } from 'react-router-dom';
-import { CustomInput, CustomDateRangePicker, CustomButton } from '../../components/elements';
-import { ICustomer } from '../../models/Customer';
-import ApiService from '../../services/apiService';
-import { IDeliveryPartner } from '../../models/DeliveryPartner';
-import { IArea } from '../../models/Area';
-import { ISubarea } from '../../models/Subarea';
-
-const { Option } = Select;
+import React, { useEffect, useState } from "react";
+import { Table, Row, Col, Tag, Switch, message, Tooltip } from "antd";
+import { CopyOutlined, PlusOutlined } from "@ant-design/icons";
+import { ISubscription } from "../../models/Subscription";
+import { ICustomer } from "../../models/Customer";
+import { IProduct, IVariant } from "../../models/Product";
+import ApiService from "../../services/apiService";
+import CustomInput from "../../components/elements/CustomInput";
+import CustomButton from "../../components/elements/CustomButton";
+import dayjs from "dayjs";
+import { ColumnsType } from "antd/es/table";
+import AddEditSubscription from "./modals/AddEditSubscription";
 
 const UnSubscribers: React.FC = () => {
-  const navigate = useNavigate();
-  const [data, setData] = useState<ICustomer[]>([]);
-  const [filteredData, setFilteredData] = useState<ICustomer[]>([]);
-  const [searchText, setSearchText] = useState('');
-  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
-  const [deliveryPartners, setDeliveryPartners] = useState<IDeliveryPartner[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [areas, setAreas] = useState<IArea[]>([]);
-  const [subareas, setSubareas] = useState<ISubarea[]>([]);
+  const [subscriptions, setSubscriptions] = useState<ISubscription[]>([]);
+  const [customers, setCustomers] = useState<ICustomer[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
+  const [searchText, setSearchText] = useState<string>("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [editingData, setEditingData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch Delivery Partners
-  const fetchDeliveryPartners = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await ApiService.get<IDeliveryPartner[]>('/delivery_boys');
-      setDeliveryPartners(response);
-    } catch (error) {
-      message.error('Failed to fetch delivery partners');
-      console.error('Failed to fetch delivery partners:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const [subRes, custRes, prodRes] = await Promise.all([
+        ApiService.get<ISubscription[]>("/subscriptions"),
+        ApiService.get<ICustomer[]>("/customers?filter=inactive_subscribers"),
+        ApiService.get<IProduct[]>("/products"),
+      ]);
 
-  // Fetch customer data from the API
-  const fetchCustomers = async () => {
-    setLoading(true);
-    try {
-      const response = await ApiService.get<ICustomer[]>(`/customers?filter=inactive_subscribers`);
-      setData(response);
-      setFilteredData(response);
-    } catch (error) {
-      message.error('Failed to fetch customers');
-      console.error('Error fetching customers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const filteredSubscriptions = subRes.filter(sub =>
+        custRes.some(cust => cust.id === sub.customer_id)
+      );
 
-  // Fetch Delivery Partners
-  const handleToggleStatus = async (id: number) => {
-    setLoading(true);
-    try {
-      await ApiService.patch<any>(`/customers/${id}/toggle_active_status`);
-      fetchCustomers();
+      setSubscriptions(filteredSubscriptions);
+      setCustomers(custRes);
+      setProducts(prodRes);
     } catch (error) {
-      message.error('Failed to update status');
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchAreas = async () => {
-      setLoading(true);
-      try {
-        const response = await ApiService.get<IArea[]>('/areas');
-        setAreas(response);
-      } catch (error) {
-        message.error('Failed to fetch areas');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchSubareas = async () => {
-      setLoading(true);
-      try {
-        const response = await ApiService.get<ISubarea[]>('/sub_areas');
-        setSubareas(response);
-      } catch (error) {
-        message.error('Failed to fetch subareas');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAreas();
-    fetchSubareas();
-    fetchDeliveryPartners();
-    fetchCustomers();
+    fetchData();
   }, []);
 
-  const columns: ColumnsType<ICustomer> = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 100,
-      fixed: 'left',
-      render: (id: number) => (
-        <a className='link' onClick={() => navigate(`/customer/${id}/profile`)}>{`C-${id.toString().padStart(3, '0')}`}</a>
-      ),
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      fixed: 'left',
-      width: 200
-    },
-    {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
-      render: (address: string, record) => {
-        const area = areas.find(a => a.id === record.area_id)?.name;
-        const subarea = subareas.find(s => s.id === record.subarea_id)?.name;
+  const getCustomerName = (customerId: number) => {
+    const customer = customers.find((c) => c.id === customerId);
+    return (
+      <div>
+        <span>
+          {customer ? customer?.name : 'Unknown Customer'}
+        </span>
+        <div style={{ fontSize: "12px", color: "gray" }}>
+          <a href={`tel:${customer?.mobile}`}>{customer?.mobile}</a>
+          <Tooltip title="Copy">
+            <CopyOutlined
+              style={{ marginLeft: 8, cursor: 'pointer' }}
+              onClick={() => {
+                navigator.clipboard.writeText(customer?.mobile || '');
+                message.success('Copied to clipboard');
+              }}
+            />
+          </Tooltip> | {customer?.state} | {customer?.city} | {customer?.pin || 'NA'} | {customer?.address}
+        </div>
+      </div>
+    )
+  };
 
+  // Get product variant details
+  const getVariantDetails = (variantId: number) => {
+    for (const product of products) {
+      const variant = product.variants.find((v) => v.id === variantId);
+      if (variant) {
+        return {
+          productName: product.name,
+          variantName: variant.name,
+          size: variant.size,
+          packaging: variant.packaging,
+        };
+      }
+    }
+    return { productName: "Unknown", variantName: "Unknown", size: "N/A", packaging: "N/A" };
+  };
+
+  // Process week data
+  const renderWeekData = (week: string, frequency: string) => {
+    try {
+      if (!week || typeof week !== "string") return "Invalid Data";
+      const parsedWeek = JSON.parse(week.replace(/'/g, '"').replace(/([a-zA-Z]+):/g, '"$1":'));
+
+      if (frequency === "daily" || frequency === "alternate_days") {
+        return parsedWeek ? Object.values(parsedWeek)[0] : "N/A";
+      } else if (frequency === "custom") {
+        return Object.entries(parsedWeek).map(([day, qty]) => (
+          <Tag color="blue" key={day}>{`${day} - ${qty}`}</Tag>
+        ));
+      }
+      return "N/A";
+    } catch (error) {
+      console.error("Error parsing week data:", error);
+      return "Invalid Data";
+    }
+  };
+
+  // Handle subscription edit
+  const handleEdit = (data: ISubscription) => {
+    setEditingData({
+      ...data,
+      start_date: dayjs(data.start_date),
+      end_date: data.end_date ? dayjs(data.end_date) : null,
+    });
+    setIsEdit(true);
+    setIsModalVisible(true);
+  };
+
+  // Handle submission of subscription data
+  const handleSubmit = async (data: any) => {
+    try {
+      if (isEdit) {
+        await ApiService.put("/subscriptions", { ...data, id: editingData.id });
+        message.success("Subscription updated successfully!");
+      } else {
+        await ApiService.post("/subscriptions", data);
+        message.success("Subscription added successfully!");
+      }
+      setIsModalVisible(false);
+      fetchData();
+    } catch (error) {
+      message.error("Failed to save subscription.");
+    }
+  };
+
+  // Group subscriptions by customer
+  const groupedSubscriptions: Record<number, ISubscription[]> = subscriptions.reduce(
+    (acc: Record<number, ISubscription[]>, sub) => {
+      const customerId = sub.customer_id;
+      if (!acc[customerId]) acc[customerId] = [];
+      acc[customerId].push(sub);
+      return acc;
+    },
+    {}
+  );
+
+  const tableData = Object.keys(groupedSubscriptions).map((customerId) => ({
+    customer: getCustomerName(Number(customerId)),
+    subscriptions: groupedSubscriptions[Number(customerId)],
+  }));
+
+  // Nested columns
+  const nestedColumns: ColumnsType<ISubscription> = [
+    {
+      title: "Product",
+      dataIndex: "variant_id",
+      key: "product",
+      width: 300,
+      render: (variantId: number, record: ISubscription) => {
+        const { productName, variantName, size, packaging } = getVariantDetails(variantId);
         return (
-          <span>
-            {area && (
-              <>
-                <strong>{area}</strong>
-              </>
-            )}
-            {subarea && (
-              <>
-                , <strong>{subarea}</strong> &nbsp;
-              </>
-            )}
-            - {address}
-          </span>
+          <div>
+            <a className="link" onClick={() => handleEdit(record)}>
+              {productName}
+            </a>
+            <div style={{ fontSize: "12px", color: "gray" }}>
+              {variantName} | {packaging}
+            </div>
+          </div>
         );
       },
     },
     {
-      title: 'Mobile',
-      dataIndex: 'mobile',
-      key: 'mobile',
-      width: 150
-    },
-    {
-      title: 'Status',
-      dataIndex: 'is_active',
-      key: 'is_active',
+      title: "Quantity",
+      dataIndex: "week",
+      key: "quantity",
       width: 150,
-      render: (isActive: boolean, record) => (
-        <Switch
-          checked={isActive}
-          onChange={() => handleToggleStatus(record.id as number)}
-          checkedChildren="Active"
-          unCheckedChildren="Inactive"
-        />
-      ),
+      render: (week, record) => <>{renderWeekData(week, record.frequency) as React.ReactNode}</>,
     },
     {
-      title: 'Delivery Boy',
-      dataIndex: 'delivery_boy_id',
-      key: 'delivery_boy_id',
-      width: 200,
-      render: (deliveryBoyId: number, record) => (
-        <Select
-          defaultValue={deliveryBoyId}
-          style={{ width: '100%' }}
-          onChange={(value) => handleDeliveryBoyChange(value, record.id as number)}
-        >
-          {deliveryPartners.map((partner) => (
-            <Option key={partner.id} value={partner.id}>
-              {partner.name}
-            </Option>
-          ))}
-        </Select>
-      ),
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      width: 100,
+      render: (price: number) => `₹${price.toFixed(2)}`,
     },
     {
-      title: 'Created On',
-      dataIndex: 'creation_date',
-      key: 'creation_date',
-      width: 200,
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY hh:mm A'),
+      title: "Frequency",
+      dataIndex: "frequency",
+      key: "frequency",
+      width: 150,
+    },
+    {
+      title: "Start Date",
+      dataIndex: "start_date",
+      key: "start_date",
+      width: 150,
+      render: (date: string) => dayjs(date).format("DD-MMM-YYYY"),
+    },
+    {
+      title: "End Date",
+      dataIndex: "end_date",
+      key: "end_date",
+      width: 150,
+      render: (date: string) => (date ? dayjs(date).format("DD-MMM-YYYY") : "Ongoing"),
+    },
+    {
+      title: "Status",
+      dataIndex: "is_active",
+      key: "is_active",
+      width: 120,
+      render: (isActive) => (
+        <Switch checked={isActive} checkedChildren="Active" unCheckedChildren="Inactive" />
+      ),
     },
   ];
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase();
-    setSearchText(value);
-    const filtered = data.filter((customer) =>
-      customer.name.toLowerCase().includes(value)
-    );
-    setFilteredData(filtered);
-  };
-
-  const handleDateRangeChange = (
-    value: [Dayjs | null, Dayjs | null] | null,
-    dateString: [string, string] | string,
-  ) => {
-    setDateRange(value as [Dayjs | null, Dayjs | null]);
-  };
-
-  const handleDeliveryBoyChange = async (deliveryBoyId: number, customerId: number) => {
-    // Find the customer that needs to be updated
-    const customerToUpdate = filteredData.find((customer) => customer.id === customerId);
-    if (!customerToUpdate) return;
-
-    // Create a copy of the customer data without the `fcm` key
-    const { fcm, ...customerDataWithoutFcm } = customerToUpdate;
-    const updatedCustomerData = { ...customerDataWithoutFcm, delivery_boy_id: deliveryBoyId };
-
-    setLoading(true);
-    try {
-      await ApiService.put('/customers', updatedCustomerData);
-      message.success('Customer updated successfully');
-
-      // Update the local state with the new delivery boy ID
-      setFilteredData((prevData) =>
-        prevData.map((customer) =>
-          customer.id === customerId ? { ...customer, delivery_boy_id: deliveryBoyId } : customer
-        )
-      );
-    } catch (error) {
-      message.error('Failed to update customer');
-      console.error('Error updating customer:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreatedFromChange = (value: string, id: number) => {
-    setFilteredData((prevData) =>
-      prevData.map((customer) =>
-        customer.id === id ? { ...customer, added_from: value as ICustomer['added_from'] } : customer
-      )
-    );
-  };
-
   return (
-    <div>
-      <h5 className='page-heading'>UnSubscribed Customers</h5>
+    <>
+      <h5 className="page-heading">In-Active Customers</h5>
+
+      {/* Filter Section */}
       <div className="filter-container">
         <Row gutter={16}>
-          <Col span={6}>
+          <Col span={12}>
             <CustomInput
               placeholder="Search by name"
               value={searchText}
-              onChange={handleSearch}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </Col>
-          <Col span={6}>
-            <CustomDateRangePicker value={dateRange} onChange={handleDateRangeChange} />
+          <Col span={12} style={{ textAlign: "right" }}>
+            <CustomButton
+              text="Add Subscriber"
+              className="primary-button"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setIsEdit(false);
+                setIsModalVisible(true);
+              }}
+            />
           </Col>
         </Row>
       </div>
 
-      <div className='tab-container'>
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          pagination={{ pageSize: 50 }}
-          loading={loading}
-          rowKey="id"
-          bordered
-          scroll={{ x: 1600 }}
-        />
-      </div>
-    </div>
+      {/* Subscription Table */}
+      <Table
+        columns={[
+          { title: "Customer", dataIndex: "customer", key: "customer", width: 200 },
+          {
+            title: "Subscriptions",
+            key: "subscriptions",
+            render: (_, { subscriptions }) => (
+              <div className="subscription-expanded-row ">
+                <Table columns={nestedColumns} dataSource={subscriptions} pagination={false} bordered />
+              </div>
+            ),
+          },
+        ]}
+        dataSource={tableData}
+        rowKey="customer"
+        loading={loading}
+        bordered
+      />
+
+      <AddEditSubscription visible={isModalVisible} onClose={() => setIsModalVisible(false)} onSubmit={handleSubmit} initialValues={editingData} isEdit={isEdit} />
+    </>
   );
 };
 

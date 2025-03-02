@@ -92,12 +92,12 @@ const Sidebar: React.FC<{ isSidebarOpen: boolean; toggleSidebar: () => void }> =
               </li>
               <li className="nav-item">
                 <NavLink to="/customers/subscribers" className={({ isActive }) => `nav-link ${isActive ? 'active-submenu' : ''}`}>
-                  Subscribers
+                  Active Subscribers
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink to="/customers/unsubscribers" className={({ isActive }) => `nav-link ${isActive ? 'active-submenu' : ''}`}>
-                  UnSubscribers
+                  In-Active Subscribers
                 </NavLink>
               </li>
               <li className="nav-item">
