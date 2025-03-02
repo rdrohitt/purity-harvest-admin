@@ -17,6 +17,7 @@ import { ITrial } from '../../models/Trials';
 
 const Orders: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
+  const [originalOrders, setOriginalOrders] = useState<IOrder[]>([]);
   const [products, setProducts] = useState<IProduct[]>([]);
   const [customers, setCustomers] = useState<ICustomer[]>([]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -35,6 +36,7 @@ const Orders: React.FC = () => {
       setLoading(true);
       const response = await ApiService.get<IOrder[]>('/orders');
       setOrders(response);
+      setOriginalOrders(response);
     } catch (error) {
       message.error('Failed to fetch orders');
     } finally {
@@ -156,6 +158,27 @@ const Orders: React.FC = () => {
     setIsEditModalVisible(true);
   };
 
+  // const updateOrderStatus = async (id: number, status: string) => {
+  //   try {
+  //     const order = orders.find((o) => o.id === id);
+  //     if (!order) {
+  //       message.error('Order not found');
+  //       return;
+  //     }
+
+  //     const payload = {
+  //       ...order,
+  //       status,
+  //     };
+
+  //     await ApiService.put(`/orders/${id}/status`, payload);
+  //     message.success(`Order status updated to ${status}`);
+  //     fetchOrders(); // Refresh the orders after updating
+  //   } catch (error) {
+  //     message.error('Failed to update order status');
+  //   }
+  // };
+
   const updateOrderStatus = async (id: number, status: string) => {
     try {
       const order = orders.find((o) => o.id === id);
@@ -175,13 +198,16 @@ const Orders: React.FC = () => {
   const handleSaveOrder = (order: IOrder) => {
     if (order.id) {
       setOrders((prev) => prev.map((o) => (o.id === order.id ? order : o)));
+      setOriginalOrders((prev) => prev.map((o) => (o.id === order.id ? order : o)));
     } else {
       setOrders((prev) => [...prev, { ...order, id: prev.length + 1 }]);
+      setOriginalOrders((prev) => [...prev, { ...order, id: prev.length + 1 }]);
     }
     setIsEditModalVisible(false);
     setIsAddModalVisible(false);
     fetchOrders();
   };
+
 
   // Filter data based on search text
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,13 +221,33 @@ const Orders: React.FC = () => {
     setOrders(filtered);
   };
 
-  // Handle date range filtering
-  const handleDateRangeChange = (
-    value: [Dayjs | null, Dayjs | null] | null,
-    dateString: [string, string] | string,
-  ) => {
+  const handleDateRangeChange = (value: [Dayjs | null, Dayjs | null] | null) => {
     setDateRange(value as [Dayjs | null, Dayjs | null]);
+    if (value && value[0] && value[1]) {
+      const [start, end] = value;
+      const filteredOrders = originalOrders.filter(order => {
+        const orderDate = dayjs(order.creation_date);
+        return orderDate.isSame(start, 'day') || orderDate.isSame(end, 'day') || (orderDate.isAfter(start) && orderDate.isBefore(end));
+      });
+      setOrders(filteredOrders);
+    } else {
+      setOrders(originalOrders);
+    }
   };
+
+  const milkOrders = orders.filter(order =>
+    order.items.some(item => {
+      const product = products.find(p => p.id === item.product_id);
+      return product && !product.name.toLowerCase().includes('ghee');
+    })
+  );
+
+  const gheeOrders = orders.filter(order =>
+    order.items.some(item => {
+      const product = products.find(p => p.id === item.product_id);
+      return product && product.name.toLowerCase().includes('ghee');
+    })
+  );
 
   const columns: ColumnsType<IOrder> = [
     {
@@ -244,17 +290,21 @@ const Orders: React.FC = () => {
       ),
     },
     {
-      title: 'Order Amount',
-      key: 'amount',
-      dataIndex: 'amount',
-      width: 130,
-    },
-    {
-      title: 'Payment Method',
-      dataIndex: 'is_cod',
-      key: 'is_cod',
-      width: 150,
-      render: (is_cod: boolean) => (is_cod ? 'COD' : 'Online'),
+      title: 'Order Details',
+      key: 'order_details',
+      width: 200,
+      render: (_, record) => (
+        <div>
+          <span>
+            Amount: ₹{record.amount}
+          </span>
+          <div style={{ fontSize: "12px", color: "gray" }}>
+            <Tag color={record.is_cod ? 'blue' : 'green'}>
+              {record.is_cod ? 'COD' : 'Online'}
+            </Tag>| Date: {dayjs(record.creation_date).format('DD-MMM-YYYY hh:mm A')}
+          </div>
+        </div>
+      ),
     },
     {
       title: 'Payment Status',
@@ -268,24 +318,25 @@ const Orders: React.FC = () => {
       ),
     },
     {
-      title: 'Status',
+      title: 'Order Status',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 140,
       render: (status) => (
         <Tooltip title={`Status: ${status}`}>
-          <Tag color={status === 'delivered' ? 'green' : status === 'cancelled' ? 'red' : 'blue'}>
+          <Tag color={
+            status === 'delivered' ? 'green' :
+              status === 'cancelled' ? 'red' :
+                status === 'rejected' ? 'yellow' :
+                  status === 'confirmed' ? 'blue' :
+                    status === 'packed' ? 'purple' :
+                      status === 'in_transit' ? 'orange' :
+                        'blue'
+          }>
             {status.toUpperCase()}
           </Tag>
         </Tooltip>
       ),
-    },
-    {
-      title: 'Order Date',
-      dataIndex: 'creation_date',
-      key: 'creation_date',
-      width: 130,
-      render: (date: string) => dayjs(date).format('DD-MMM-YYYY'),
     },
     {
       title: 'Delivery Date',
@@ -303,18 +354,61 @@ const Orders: React.FC = () => {
           color:
             iconStatus === 'confirmed'
               ? '#007bff' // Blue for confirmed
-              : iconStatus === 'delivered'
-                ? '#28a745' // Green for delivered
-                : iconStatus === 'cancelled'
-                  ? '#dc3545' // Red for cancelled
-                  : iconStatus === 'rejected'
-                    ? '#ffc107' // Yellow for rejected
-                    : '#6c757d', // Default color
+              : iconStatus === 'packed'
+                ? '#6f42c1' // Purple for packed
+                : iconStatus === 'in_transit'
+                  ? '#fd7e14' // Orange for in_transit
+                  : iconStatus === 'delivered'
+                    ? '#28a745' // Green for delivered
+                    : iconStatus === 'cancelled'
+                      ? '#dc3545' // Red for cancelled
+                      : iconStatus === 'rejected'
+                        ? '#ffc107' // Yellow for rejected
+                        : '#6c757d', // Default color
           cursor: 'pointer',
           fontSize: '18px',
         });
 
         const availableIcons = [
+          record.status !== 'confirmed' && (
+            <Popconfirm
+              title="Are you sure you want to mark this order as Confirmed?"
+              onConfirm={() => updateOrderStatus(record.id!, 'confirmed')}
+              okText="Yes"
+              cancelText="No"
+              key="confirmed"
+            >
+              <Tooltip title="Confirmed">
+                <CheckCircleOutlined style={getIconStyle('confirmed')} />
+              </Tooltip>
+            </Popconfirm>
+          ),
+          record.status !== 'packed' && (
+            <Popconfirm
+              title="Are you sure you want to mark this order as Packed?"
+              onConfirm={() => updateOrderStatus(record.id!, 'packed')}
+              okText="Yes"
+              cancelText="No"
+              key="packed"
+            >
+              <Tooltip title="Packed">
+                <CheckCircleOutlined style={getIconStyle('packed')} />
+              </Tooltip>
+            </Popconfirm>
+          ),
+          record.status !== 'in_transit' && (
+            <Popconfirm
+              title="Are you sure you want to mark this order as In Transit?"
+              onConfirm={() => updateOrderStatus(record.id!, 'in_transit')}
+              okText="Yes"
+              cancelText="No"
+              key="in_transit"
+            >
+              <Tooltip title="In Transit">
+                <CheckCircleOutlined style={getIconStyle('in_transit')} />
+              </Tooltip>
+            </Popconfirm>
+          ),
           record.status !== 'delivered' && (
             <Popconfirm
               title="Are you sure you want to mark this order as Delivered?"
@@ -456,20 +550,6 @@ const Orders: React.FC = () => {
     },
   ];
 
-  const milkOrders = orders.filter(order =>
-    order.items.some(item => {
-      const product = products.find(p => p.id === item.product_id);
-      return product && !product.name.toLowerCase().includes('ghee');
-    })
-  );
-
-  const gheeOrders = orders.filter(order =>
-    order.items.some(item => {
-      const product = products.find(p => p.id === item.product_id);
-      return product && product.name.toLowerCase().includes('ghee');
-    })
-  );
-
   return (
     <div>
       <h5 className='page-heading'>Orders</h5>
@@ -534,6 +614,9 @@ const Orders: React.FC = () => {
                 if (record.status === 'delivered') return 'row-delivered';
                 if (record.status === 'cancelled') return 'row-cancelled';
                 if (record.status === 'rejected') return 'row-rejected';
+                if (record.status === 'confirmed') return 'row-confirmed';
+                if (record.status === 'packed') return 'row-packed';
+                if (record.status === 'in_transit') return 'row-in-transit';
                 return '';
               }}
             />

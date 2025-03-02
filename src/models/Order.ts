@@ -13,7 +13,7 @@ export interface IOrder {
   amount: number;
   creation_date?: string;
   delivery_date?: string;
-  status?: 'confirmed' | 'rejected' | 'cancelled' | 'delivered';
+  status?: 'confirmed' | 'rejected' | 'cancelled' | 'delivered' | 'in_transit' | 'packed';
   customer_id: number;
   discount?: number;
   is_cod?: boolean;

@@ -135,6 +135,20 @@ const AllCustomer: React.FC = () => {
     }
   };
 
+  const handleDateRangeChange = (value: [Dayjs | null, Dayjs | null] | null) => {
+    setDateRange(value as [Dayjs | null, Dayjs | null]);
+    if (value && value[0] && value[1]) {
+      const [start, end] = value;
+      const filtered = customers.filter(customer => {
+        const creationDate = dayjs(customer.creation_date);
+        return creationDate.isSame(start, 'day') || creationDate.isSame(end, 'day') || (creationDate.isAfter(start) && creationDate.isBefore(end));
+      });
+      setFilteredCustomers(filtered);
+    } else {
+      setFilteredCustomers(customers);
+    }
+  };
+
   // Filter customers
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
@@ -392,10 +406,11 @@ const AllCustomer: React.FC = () => {
           />
         </Col>
         <Col span={6}>
-          <CustomDateRangePicker
+          {/* <CustomDateRangePicker
             value={dateRange}
             onChange={(dates, dateStrings) => setDateRange(dates as [Dayjs | null, Dayjs | null])}
-          />
+          /> */}
+            <CustomDateRangePicker value={dateRange} onChange={handleDateRangeChange} />
         </Col>
         <Col span={12} style={{ textAlign: 'right' }}>
           <CustomButton
@@ -431,8 +446,6 @@ const AllCustomer: React.FC = () => {
             dataIndex: 'address',
             key: 'address',
             render: (address: string, record) => {
-              const area = areas.find(a => a.id === record.area_id)?.name;
-              const subarea = subareas.find(s => s.id === record.subarea_id)?.name;
               const state = record.state;
               const city = record.city;
               const pin = record.pin;
@@ -458,6 +471,7 @@ const AllCustomer: React.FC = () => {
             title: 'Status',
             dataIndex: 'is_active',
             key: 'is_active',
+            width: 120,
             render: (isActive, record) => (
               <Switch
               checked={isActive}
@@ -471,7 +485,7 @@ const AllCustomer: React.FC = () => {
             title: 'Delivery Boy',
             dataIndex: 'delivery_boy_id',
             key: 'delivery_boy_id',
-            width: 200,
+            width: 180,
             render: (deliveryBoyId: number, record) => (
               <Select
                 defaultValue={deliveryBoyId}
@@ -485,12 +499,6 @@ const AllCustomer: React.FC = () => {
                 ))}
               </Select>
             ),
-          },
-          {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-            width: 250
           },
           {
             title: 'Created From',
@@ -534,7 +542,7 @@ const AllCustomer: React.FC = () => {
         }}
         bordered
         pagination={{ pageSize: 20 }}
-        scroll={{ x: 2000 }}
+        scroll={{ x: 1800 }}
         loading={loading}
       />
       <AddCustomerModal

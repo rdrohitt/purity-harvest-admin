@@ -17,6 +17,7 @@ import Complain from './modules/complains/Complain';
 import Offers from './modules/offers/Offers';
 import Enquiries from './modules/customers/Enquiries';
 import Trials from './modules/customers/Trials';
+import LowWallet from './modules/customers/LowWallet';
 
 const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(window.innerWidth > 768);
@@ -54,6 +55,7 @@ const App: React.FC = () => {
             <Route path="/customer/:id/:tab" element={<CustomerDetail />} />
             <Route path="/customers/subscribers" element={<Subscription />} />
             <Route path="/customers/unsubscribers" element={<UnSubscribers />} />
+            <Route path="/customers/low-wallet" element={<LowWallet />} />
             <Route path="/customers/vacations" element={<Vacations />} />
             <Route path="/customers/complaints" element={<Complain />} />
             <Route path="/customers/enquiries" element={<Enquiries />} />

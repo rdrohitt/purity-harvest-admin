@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Row, Col, Select, message, Switch } from 'antd';
+import { Table, Row, Col, Select, message, Switch, Input } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs, { Dayjs } from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,7 @@ import { ISubarea } from '../../models/Subarea';
 
 const { Option } = Select;
 
-const UnSubscribers: React.FC = () => {
+const LowWallet: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<ICustomer[]>([]);
   const [filteredData, setFilteredData] = useState<ICustomer[]>([]);
@@ -22,6 +22,7 @@ const UnSubscribers: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [areas, setAreas] = useState<IArea[]>([]);
   const [subareas, setSubareas] = useState<ISubarea[]>([]);
+  const [minBalance, setMinBalance] = useState<number>(500);
 
   // Fetch Delivery Partners
   const fetchDeliveryPartners = async () => {
@@ -31,7 +32,6 @@ const UnSubscribers: React.FC = () => {
       setDeliveryPartners(response);
     } catch (error) {
       message.error('Failed to fetch delivery partners');
-      console.error('Failed to fetch delivery partners:', error);
     } finally {
       setLoading(false);
     }
@@ -41,12 +41,11 @@ const UnSubscribers: React.FC = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await ApiService.get<ICustomer[]>(`/customers?filter=inactive_subscribers`);
+      const response = await ApiService.get<ICustomer[]>(`/customers?filter=has_low_balance&min_balance=${minBalance}`);
       setData(response);
       setFilteredData(response);
     } catch (error) {
       message.error('Failed to fetch customers');
-      console.error('Error fetching customers:', error);
     } finally {
       setLoading(false);
     }
@@ -179,6 +178,30 @@ const UnSubscribers: React.FC = () => {
       ),
     },
     {
+      title: 'Created From',
+      dataIndex: 'added_from',
+      key: 'added_from',
+      width: 150,
+      render: (addedFrom: string, record) => (
+        <Select
+          disabled
+          defaultValue={addedFrom}
+          style={{ width: 120 }}
+          onChange={(value) => {
+            if (record.id !== undefined) {
+              handleCreatedFromChange(value, record.id)
+            }
+          }
+          }
+        >
+          <Option value="admin_panel">Admin</Option>
+          <Option value="android">Android</Option>
+          <Option value="ios">iOS</Option>
+          <Option value="web">Web</Option>
+        </Select>
+      ),
+    },
+    {
       title: 'Created On',
       dataIndex: 'creation_date',
       key: 'creation_date',
@@ -241,7 +264,7 @@ const UnSubscribers: React.FC = () => {
 
   return (
     <div>
-      <h5 className='page-heading'>UnSubscribed Customers</h5>
+      <h5 className='page-heading'>Low Wallet</h5>
       <div className="filter-container">
         <Row gutter={16}>
           <Col span={6}>
@@ -254,6 +277,20 @@ const UnSubscribers: React.FC = () => {
           <Col span={6}>
             <CustomDateRangePicker value={dateRange} onChange={handleDateRangeChange} />
           </Col>
+          <Col span={6}>
+            <Input
+              placeholder="Min Balance"
+              value={minBalance}
+              onChange={(e) => setMinBalance(Number(e.target.value))}
+            />
+          </Col>
+          <Col span={6}>
+            <CustomButton
+              text="Fetch Customers"
+              className="primary-button"
+              onClick={fetchCustomers}
+            />
+          </Col>
         </Row>
       </div>
 
@@ -265,11 +302,11 @@ const UnSubscribers: React.FC = () => {
           loading={loading}
           rowKey="id"
           bordered
-          scroll={{ x: 1600 }}
+          scroll={{ x: 1800 }}
         />
       </div>
     </div>
   );
 };
 
-export default UnSubscribers;
+export default LowWallet;
