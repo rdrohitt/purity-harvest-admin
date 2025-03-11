@@ -54,7 +54,7 @@ const LowWallet: React.FC = () => {
     const fetchWallets = async () => {
         setLoading(true);
         try {
-            const response = await ApiService.get<IWallet[]>('/wallets');
+            const response = await ApiService.get<IWallet[]>('/wallet');
             setWallets(response);
         } catch (error) {
             message.error('Failed to fetch wallets');

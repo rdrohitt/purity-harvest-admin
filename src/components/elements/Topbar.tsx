@@ -4,9 +4,9 @@ import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons
 import { useNavigate } from 'react-router-dom';
 
 const Topbar: React.FC<{ toggleSidebar: () => void }> = ({ toggleSidebar }) => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.removeItem('bearer'); 
+    localStorage.removeItem('bearer');
     navigate('/login');
   };
 
@@ -32,7 +32,7 @@ const Topbar: React.FC<{ toggleSidebar: () => void }> = ({ toggleSidebar }) => {
 
   return (
     <header className="topbar" style={styles.topbar}>
-     <div className="hamburger" onClick={toggleSidebar}>
+      <div className="hamburger" onClick={toggleSidebar}>
         <i className="fas fa-bars"></i>
       </div>
       <div style={styles.userProfile}>

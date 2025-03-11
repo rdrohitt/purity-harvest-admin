@@ -48,8 +48,8 @@ const Dashboard: React.FC = () => {
 
   const customerStats = [
     { title: 'Total Customers', count: dashboardStats.total_customers, icon: <UserOutlined className="stat-icon total-customers-icon" />, path: '/customers/all' },
-    { title: 'Total Orders', count: dashboardStats.total_orders, icon: <ShoppingCartOutlined className="stat-icon total-orders-icon" />, path: '/orders/one-time-order'},
-    { title: 'Trials', count: dashboardStats.total_trials, icon: <ExperimentOutlined className="stat-icon trial-given-icon" /> ,path: '/orders/one-time-order'},
+    { title: 'Total Orders', count: dashboardStats.total_orders, icon: <ShoppingCartOutlined className="stat-icon total-orders-icon" />, path: '/orders/one-time-order' },
+    { title: 'Trials', count: dashboardStats.total_trials, icon: <ExperimentOutlined className="stat-icon trial-given-icon" />, path: '/orders/one-time-order' },
     { title: 'Active Subscriptions', count: dashboardStats.active_subscriptions, icon: <CheckCircleOutlined className="stat-icon active-subscriptions-icon" />, path: '' },
     { title: 'Inactive Subscriptions', count: dashboardStats.inactive_subscriptions, icon: <CloseCircleOutlined className="stat-icon inactive-subscriptions-icon" />, path: '' },
     { title: 'Enquiries', count: dashboardStats.total_enquiries, icon: <QuestionCircleOutlined className="stat-icon without-subscription-icon" />, path: '' },
